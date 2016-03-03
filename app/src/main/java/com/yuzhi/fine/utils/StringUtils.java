@@ -284,7 +284,7 @@ public class StringUtils {
         long currentTime = System.currentTimeMillis();
         float i = ((currentTime - date) / 3600 / 1000);
         if (i < 1) {
-            int time = (int) FloatMath.ceil(i * 60);
+            int time = (int) Math.ceil(i * 60);
             return time + 1 + "分钟前";
         } else if (i < 24) {
             return (int) i + "小时前";

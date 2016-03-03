@@ -12,6 +12,7 @@ import com.yuzhi.fine.R;
 import com.yuzhi.fine.fragment.BufferKnifeFragment;
 import com.yuzhi.fine.fragment.MainPagerFragment;
 import com.yuzhi.fine.fragment.MemberFragment;
+import com.yuzhi.fine.fragment.WildebeestFragment;
 import com.yuzhi.fine.ui.UIHelper;
 
 import java.util.ArrayList;
@@ -112,7 +113,7 @@ public class MainActivity extends BaseFragmentActivity {
     private Fragment instantFragment(int currIndex) {
         switch (currIndex) {
             case 0: return new MainPagerFragment();
-            case 1: return new BufferKnifeFragment();
+            case 1: return new WildebeestFragment();
             case 2: return new BufferKnifeFragment();
             case 3: return new MemberFragment();
             default: return null;
