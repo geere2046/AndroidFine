@@ -21,17 +21,18 @@
             android:id="@+id/aaa"
             android:layout_width="wrap_content"
             android:layout_height="50dip"
-            android:text="hello_blaaaa" />
+            android:text="你的得分：" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="50dip"
             android:layout_toRightOf="@+id/aaa"
-            android:text="@string/hello_blank_fragment" />
+            android:text="100" />
     </RelativeLayout>
 
     <ScrollView
         android:id="@+id/vw_scroll"
+        android:layout_above="@+id/bottom_vw"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/vw_title">
@@ -128,6 +129,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/para_vw"
                 android:layout_marginLeft="15dip"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
@@ -164,11 +166,20 @@
                     android:layout_height="20dip"
                     android:text="路况：" />
             </LinearLayout>
+
+            <com.github.mikephil.charting.charts.RadarChart
+                android:id="@+id/chart1"
+                android:layout_width="match_parent"
+                android:paddingLeft="150dip"
+                android:paddingRight="150dip"
+                android:layout_height="300dp"
+                android:orientation="vertical" />
         </LinearLayout>
     </ScrollView>
 
 
     <LinearLayout
+        android:id="@+id/bottom_vw"
         android:layout_width="match_parent"
         android:layout_height="120dip"
         android:layout_alignParentBottom="true"
