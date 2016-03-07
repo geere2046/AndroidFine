@@ -1,7 +1,12 @@
 package com.yuzhi.fine.fragment;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +17,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.jxtii.wildebeest.util.CommUtil;
 import com.yuzhi.fine.R;
 
 import butterknife.Bind;
@@ -20,6 +26,7 @@ import butterknife.ButterKnife;
 public class WildebeestFragment extends Fragment implements View.OnClickListener {
 
     Context context;
+    static final int GPS_OPEN_STATUS = 1;
 
     @Bind(R.id.aaa)
     TextView aaa;
@@ -86,14 +93,68 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
         switch (v.getId()) {
             case R.id.btn_start:
                 showToast("start");
+                initLocService();
                 break;
             case R.id.btn_finish:
                 showToast("end");
+                stopLocService();
+                break;
+        }
+    }
+
+    void initLocService() {
+        if (CommUtil.isOpenGPS(context)) {
+            showToast("已开启GPS！");
+            startLocService();
+        } else {
+            showToast("请开启GPS！");
+            Intent intent = new Intent(
+                    Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivityForResult(intent, GPS_OPEN_STATUS);
+        }
+
+    }
+
+    void stopLocService() {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(CommUtil.START_INTENT);
+        PendingIntent pt = PendingIntent.getBroadcast(context, 0, intent, 0);
+        am.cancel(pt);
+
+        intent = new Intent(CommUtil.STOP_INTENT);
+        pt = PendingIntent.getBroadcast(context, 0, intent, 0);
+        long triggerAtTime = SystemClock.elapsedRealtime() + 5 * 1000;
+        am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtTime, pt);
+    }
+
+    void startLocService() {
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        long triggerAtTime = System.currentTimeMillis() + 5 * 1000;
+        long interval = 15 * 60 * 1000;
+        Intent intent = new Intent(CommUtil.START_INTENT);
+        PendingIntent pt = PendingIntent.getBroadcast(context, 0, intent, 0);
+        am.setRepeating(AlarmManager.RTC_WAKEUP, triggerAtTime, interval, pt);
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case GPS_OPEN_STATUS:
+                Boolean isOpen = CommUtil.isOpenGPS(context);
+                if (isOpen) {
+                    showToast("已开启GPS！");
+                    startLocService();
+                } else {
+                    showToast("请开启GPS！");
+                    Intent intent = new Intent(
+                            Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivityForResult(intent, GPS_OPEN_STATUS);
+                }
                 break;
         }
     }
 
     void showToast(String message) {
-        Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
     }
 }

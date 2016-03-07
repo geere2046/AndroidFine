@@ -24,6 +24,22 @@
         <activity android:name=".activity.HouseDetailActivity" android:screenOrientation="portrait"/>
         <activity android:name=".activity.ImageGalleryActivity" android:screenOrientation="portrait"/>
 
+        <receiver android:name="com.jxtii.wildebeest.service.TaskReceiver">
+            <intent-filter>
+                <action android:name="com.jxtii.wildebeest.task_receiver"/>
+                <action android:name="com.jxtii.wildebeest.stop_receiver"/>
+            </intent-filter>
+        </receiver>
+
+        <service android:name="com.jxtii.wildebeest.service.TaskService"
+            android:enabled="true"
+            android:label="奔跑的角马"/>
+
+        <service android:name="com.amap.api.location.APSService"/>
+
+
+        <meta-data android:name="com.amap.api.v2.apikey" android:value="key"/>
+
     </application>
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -44,5 +60,14 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
     <uses-permission android:name="android.permission.READ_LOGS"/>
+
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"></uses-permission>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"></uses-permission>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"></uses-permission>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"></uses-permission>
+    <uses-permission android:name="android.permission.INTERNET"></uses-permission>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"></uses-permission>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"></uses-permission>
 
 </manifest>
