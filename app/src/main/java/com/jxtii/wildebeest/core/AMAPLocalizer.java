@@ -1,6 +1,7 @@
 package com.jxtii.wildebeest.core;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -8,7 +9,12 @@ import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
+import com.jxtii.wildebeest.model.PositionRecord;
 import com.jxtii.wildebeest.util.CommUtil;
+import com.jxtii.wildebeest.util.DateStr;
+
+import org.litepal.crud.DataSupport;
+import org.litepal.tablemanager.Connector;
 
 /**
  * Created by huangyc on 2016/3/4.
@@ -20,12 +26,14 @@ public class AMAPLocalizer implements AMapLocationListener {
     AMapLocationClient aMapLocationClient = null;
     volatile static AMAPLocalizer instance = null;
     public String locinfo = null;
+    SQLiteDatabase db = null;
 
     private AMAPLocalizer(Context ctx) {
         this.ctx = ctx;
         if (aMapLocationClient == null)
             aMapLocationClient = new AMapLocationClient(ctx);
         aMapLocationClient.setLocationListener(this);
+        db = Connector.getDatabase();
     }
 
     public static AMAPLocalizer getInstance(Context ctx) {
@@ -67,8 +75,8 @@ public class AMAPLocalizer implements AMapLocationListener {
                 Log.w(TAG,"AMapLocationClient haved start");
             }
         } else {
-            this.aMapLocationClient.unRegisterLocationListener(this);
             if (this.aMapLocationClient != null) {
+                this.aMapLocationClient.unRegisterLocationListener(this);
                 this.aMapLocationClient.stopLocation();
                 this.aMapLocationClient.onDestroy();
             }
@@ -152,6 +160,12 @@ public class AMAPLocalizer implements AMapLocationListener {
             Double geoLng = amapLocation.getLongitude();
             locinfo = geoLat + ";" + geoLng + ";定位器不做地址解析;"
                     + amapLocation.getProvider() + ";" + extra;
+            PositionRecord pr = new PositionRecord();
+            pr.setLat(geoLat);
+            pr.setLng(geoLng);
+            pr.setDateStr(DateStr.yyyymmddHHmmssStr());
+            pr.setExtra(amapLocation.toStr());
+            pr.save();
 //            Log.i(TAG, "locinfo = " + locinfo);
         } else if (amapLocation != null && amapLocation.getErrorCode() != 0) {
             Log.w(TAG,

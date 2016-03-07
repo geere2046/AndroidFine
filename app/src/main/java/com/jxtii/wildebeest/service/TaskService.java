@@ -8,10 +8,14 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.jxtii.wildebeest.core.AMAPLocalizer;
+import com.jxtii.wildebeest.model.PositionRecord;
 import com.jxtii.wildebeest.util.CommUtil;
+
+import org.litepal.crud.DataSupport;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -48,6 +52,7 @@ public class TaskService extends Service {
             stopSelfSevice();
         } else {
             interval = intent.getIntExtra("interval", 900);
+            Log.w(TAG, ">>>>>>>onStartCommand interval = " + interval);
             if (amapLocalizer != null)
                 amapLocalizer.setLocationManager(true, "gps", interval);
             stopTimer();
@@ -72,33 +77,48 @@ public class TaskService extends Service {
      * 上报定位信息
      */
     void sendAmapLocInfo() {
-        String locinfo = (amapLocalizer != null) ? amapLocalizer.locinfo : "";
-        Log.e(TAG,locinfo);
+        try {
+            String locinfo = (amapLocalizer != null) ? amapLocalizer.locinfo : "";
+            if(!TextUtils.isEmpty(locinfo)){
+                Log.w(TAG, locinfo);
+            }
+            int prCount = DataSupport.count(PositionRecord.class);
+            Log.e(TAG, ">>>>>>>>>"+prCount);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void onDestroy() {
+        Log.w(TAG,">>>>>>>>  onDestroy");
         super.onDestroy();
+        stopSelfSevice();
     }
 
     @Override
     public void onLowMemory() {
+        Log.w(TAG,">>>>>>>>  onLowMemory");
         super.onLowMemory();
     }
 
     @Override
     public void onTrimMemory(int level) {
+        Log.w(TAG,">>>>>>>>  onTrimMemory");
         super.onTrimMemory(level);
     }
 
     void stopSelfSevice() {
-        AlarmManager am = (AlarmManager) this
-                .getSystemService(Context.ALARM_SERVICE);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 3,
-                new Intent(CommUtil.START_INTENT), 0);
-        long triggerAtTime = SystemClock.elapsedRealtime() + 5 * 1000;
-        am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtTime,
-                pendingIntent);
+        Log.w(TAG,">>>>>>>>  stopSelfSevice");
+//        AlarmManager am = (AlarmManager) this
+//                .getSystemService(Context.ALARM_SERVICE);
+//        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 3,
+//                new Intent(CommUtil.START_INTENT), 0);
+//        long triggerAtTime = SystemClock.elapsedRealtime() + 5 * 1000;
+//        am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtTime,
+//                pendingIntent);
+        if (amapLocalizer != null)
+            amapLocalizer.setLocationManager(false, "", 0);
         stopTimer();
         this.stopSelf();
     }
@@ -118,7 +138,7 @@ public class TaskService extends Service {
     }
 
     public void acquireWakeLock(Context cxt) {
-        Log.i(TAG, ">>>>>>点亮屏幕");
+        Log.d(TAG, ">>>>>>点亮屏幕");
         if (m_wakeLockObj == null) {
             PowerManager pm = (PowerManager) cxt
                     .getSystemService(Context.POWER_SERVICE);
@@ -130,7 +150,7 @@ public class TaskService extends Service {
     }
 
     public void releaseWakeLock() {
-        Log.i(TAG, ">>>>>>取消点亮");
+        Log.d(TAG, ">>>>>>取消点亮");
         if (m_wakeLockObj != null && m_wakeLockObj.isHeld()) {
             m_wakeLockObj.setReferenceCounted(false);// 处理RuntimeException:
             // WakeLock

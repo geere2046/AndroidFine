@@ -17,8 +17,12 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.jxtii.wildebeest.model.PositionRecord;
+import com.jxtii.wildebeest.service.TaskService;
 import com.jxtii.wildebeest.util.CommUtil;
 import com.yuzhi.fine.R;
+
+import org.litepal.crud.DataSupport;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -117,23 +121,48 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
 
     void stopLocService() {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(CommUtil.START_INTENT);
+        Intent intent = new Intent();
+        intent.setAction(CommUtil.START_INTENT);
+        intent.setPackage("com.yuzhi.fine");
+        intent.putExtra("interval", 2000);
+        //Implicit intents with startService are not safe
+//        Intent intent = new Intent(CommUtil.START_INTENT);
         PendingIntent pt = PendingIntent.getBroadcast(context, 0, intent, 0);
         am.cancel(pt);
 
-        intent = new Intent(CommUtil.STOP_INTENT);
+        intent = new Intent();
+        intent.setAction(CommUtil.STOP_INTENT);
+        intent.setPackage("com.yuzhi.fine");
+        intent.putExtra("interval", 2000);
+        //Implicit intents with startService are not safe
+//        intent = new Intent(CommUtil.STOP_INTENT);
         pt = PendingIntent.getBroadcast(context, 0, intent, 0);
         long triggerAtTime = SystemClock.elapsedRealtime() + 5 * 1000;
         am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtTime, pt);
     }
 
     void startLocService() {
+        DataSupport.deleteAll(PositionRecord.class);
+
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         long triggerAtTime = System.currentTimeMillis() + 5 * 1000;
         long interval = 15 * 60 * 1000;
-        Intent intent = new Intent(CommUtil.START_INTENT);
+        Intent intent = new Intent();
+        intent.setAction(CommUtil.START_INTENT);
+        intent.setPackage("com.yuzhi.fine");
+        intent.putExtra("interval", 2000);
+        //Implicit intents with startService are not safe
+//        Intent intent = new Intent(CommUtil.START_INTENT);
         PendingIntent pt = PendingIntent.getBroadcast(context, 0, intent, 0);
         am.setRepeating(AlarmManager.RTC_WAKEUP, triggerAtTime, interval, pt);
+
+        Intent ii = new Intent();
+        ii.setAction("com.jxtii.wildebeest.task_service");
+        ii.setPackage("com.yuzhi.fine");
+        //Implicit intents with startService are not safe
+//        ii.setClass(getActivity(), TaskService.class);
+        ii.putExtra("interval", 2000);
+        getActivity().startService(ii);
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {

@@ -5,7 +5,9 @@ import android.app.Application;
 import com.squareup.leakcanary.LeakCanary;
 import com.squareup.leakcanary.RefWatcher;
 
-public class AppContext extends Application {
+import org.litepal.LitePalApplication;
+
+public class AppContext extends LitePalApplication {
 
     private static AppContext app;
 

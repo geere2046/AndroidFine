@@ -37,14 +37,20 @@ public class TaskReceiver extends BroadcastReceiver {
 
     void startTaskService() {
         Intent intent = new Intent();
-        intent.setClass(ctx, TaskService.class);
+        intent.setAction("com.jxtii.wildebeest.task_service");
+        intent.setPackage("com.yuzhi.fine");
+        //Implicit intents with startService are not safe
+//        intent.setClass(ctx, TaskService.class);
         intent.putExtra("interval", 2000);
         ctx.startService(intent);
     }
 
     void stopTaskService() {
         Intent intent = new Intent();
-        intent.setClass(ctx, TaskService.class);
+        intent.setAction("com.jxtii.wildebeest.task_service");
+        intent.setPackage("com.yuzhi.fine");
+        //Implicit intents with startService are not safe
+//        intent.setClass(ctx, TaskService.class);
         ctx.stopService(intent);
     }
 }
