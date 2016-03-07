@@ -5,6 +5,8 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
@@ -24,6 +26,10 @@ import com.yuzhi.fine.R;
 
 import org.litepal.crud.DataSupport;
 
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
@@ -31,6 +37,22 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
 
     Context context;
     static final int GPS_OPEN_STATUS = 1;
+    Timer timer;
+    TimerTask timerTask;
+    Handler handler = new Handler(){
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case 0:
+                    tv5.setText("急加速：" + (new Random().nextInt(100) % (100 - 10 + 1) + 10));
+                    tv6.setText("急减速：" + (new Random().nextInt(100) % (100 - 10 + 1) + 10));
+                    tv7.setText("急转弯：" + (new Random().nextInt(100) % (100 - 10 + 1) + 10));
+                    tv8.setText("疲劳：" + (new Random().nextInt(100) % (100 - 10 + 1) + 10));
+                    tv9.setText("超速：" + (new Random().nextInt(100) % (100 - 10 + 1) + 10));
+                    tv10.setText("路况：" + (new Random().nextInt(100) % (100 - 10 + 1) + 10));
+                    break;
+            }
+        }
+    };
 
     @Bind(R.id.aaa)
     TextView aaa;
@@ -120,6 +142,8 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
     }
 
     void stopLocService() {
+        stopReflash();
+
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent();
         intent.setAction(CommUtil.START_INTENT);
@@ -143,6 +167,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
 
     void startLocService() {
         DataSupport.deleteAll(PositionRecord.class);
+        startReflash();
 
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         long triggerAtTime = System.currentTimeMillis() + 5 * 1000;
@@ -163,6 +188,21 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
 //        ii.setClass(getActivity(), TaskService.class);
         ii.putExtra("interval", 2000);
         getActivity().startService(ii);
+    }
+
+    void startReflash(){
+        timer = new Timer();
+        timerTask = new TimerTask() {
+            public void run() {
+                handler.sendEmptyMessage(0);
+            }
+        };
+        timer.scheduleAtFixedRate(timerTask, 10*1000, 5*1000);
+    }
+
+    void stopReflash() {
+        if (timer != null)
+            timer.cancel();
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
