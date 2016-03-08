@@ -9,12 +9,15 @@ import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
+import com.jxtii.wildebeest.model.CompreRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
 import com.jxtii.wildebeest.util.CommUtil;
 import com.jxtii.wildebeest.util.DateStr;
 
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
+
+import java.util.Random;
 
 /**
  * Created by huangyc on 2016/3/4.
@@ -160,12 +163,39 @@ public class AMAPLocalizer implements AMapLocationListener {
             Double geoLng = amapLocation.getLongitude();
             locinfo = geoLat + ";" + geoLng + ";定位器不做地址解析;"
                     + amapLocation.getProvider() + ";" + extra;
+
             PositionRecord pr = new PositionRecord();
             pr.setLat(geoLat);
             pr.setLng(geoLng);
             pr.setDateStr(DateStr.yyyymmddHHmmssStr());
             pr.setExtra(amapLocation.toStr());
             pr.save();
+
+            //模拟当前速度、时间段内行驶米
+            float curSpeed = new Random().nextFloat() * 130;//130km/h maxspeed
+            float curDistance = new Random().nextFloat() * 36 * 2;// per second max distance 36m * 2s
+
+            int crCount = DataSupport.count(CompreRecord.class);
+            Log.e(TAG,">>>>>>>>>>>>>"+crCount);
+            if(crCount == 0){
+                CompreRecord cr = new CompreRecord();
+                cr.setBeginTime(DateStr.yyyymmddHHmmssStr());
+                cr.setCurrentTime(DateStr.yyyymmddHHmmssStr());
+                cr.setMaxSpeed(curSpeed);
+                cr.setTravelMeter(0);
+                cr.save();
+            }else{
+                CompreRecord cr = new CompreRecord();
+                cr.setCurrentTime(DateStr.yyyymmddHHmmssStr());
+                CompreRecord lastCr = DataSupport.find(CompreRecord.class,1);
+                float lastSpeed = lastCr.getMaxSpeed();
+                if(curSpeed > lastSpeed){
+                    cr.setMaxSpeed(curSpeed);
+                }
+                float lastDis = lastCr.getTravelMeter();
+                cr.setTravelMeter(lastDis + curDistance);
+                cr.update(1);
+            }
 //            Log.i(TAG, "locinfo = " + locinfo);
         } else if (amapLocation != null && amapLocation.getErrorCode() != 0) {
             Log.w(TAG,

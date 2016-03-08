@@ -32,13 +32,17 @@ import com.github.mikephil.charting.data.RadarDataSet;
 import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 import com.github.mikephil.charting.interfaces.datasets.IRadarDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.jxtii.wildebeest.model.CompreRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
 import com.jxtii.wildebeest.util.CommUtil;
 import com.yuzhi.fine.R;
 
 import org.litepal.crud.DataSupport;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -110,6 +114,15 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
 
                     mChart.invalidate();
 
+                    CompreRecord cr = DataSupport.find(CompreRecord.class,1);
+                    if(cr != null) {
+                        tvTravel.setText(CommUtil.floatToStr(cr.getTravelMeter(), 1));
+                        tvMaxspeed.setText(CommUtil.floatToStr(cr.getMaxSpeed(), 1));
+                        tvTimepass.setText(CommUtil.timeSpanHHmm(cr.getBeginTime(), cr.getCurrentTime()));
+                        long timeFin = CommUtil.timeSpanSecond(cr.getBeginTime(), cr.getCurrentTime());
+                        float aveSp = cr.getTravelMeter() * 18 / (timeFin * 5);
+                        tvAvespeed.setText(CommUtil.floatToStr(aveSp, 1));
+                    }
                     break;
             }
         }
@@ -151,6 +164,14 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
     LinearLayout paraVw;
     @Bind(R.id.bottom_vw)
     LinearLayout bottomVw;
+    @Bind(R.id.tv_travel)
+    TextView tvTravel;
+    @Bind(R.id.tv_timepass)
+    TextView tvTimepass;
+    @Bind(R.id.tv_maxspeed)
+    TextView tvMaxspeed;
+    @Bind(R.id.tv_avespeed)
+    TextView tvAvespeed;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -262,6 +283,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
 
     void startLocService() {
         DataSupport.deleteAll(PositionRecord.class);
+        DataSupport.deleteAll(CompreRecord.class);
         startReflash();
 
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);

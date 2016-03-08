@@ -5,6 +5,9 @@ import android.content.Context;
 import android.location.LocationManager;
 
 import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -71,4 +74,51 @@ public class CommUtil {
         String p = decimalFormat.format(fl);
         return p;
     }
+
+    /**
+     * 计算时间差，返回秒
+     * @param last yyyyMMddHHmmss
+     * @param curr yyyyMMddHHmmss
+     * @return
+     */
+    public static long timeSpanSecond(String last, String curr) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+            Date dateFirst = sdf.parse(last);
+            Date dateCurr = sdf.parse(curr);
+            long between = (dateCurr.getTime() - dateFirst.getTime()) / 1000;
+            return between;
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    /**
+     * 计算时间差，返回HH:mm
+     * @param last yyyyMMddHHmmss
+     * @param curr yyyyMMddHHmmss
+     * @return
+     */
+    public static String timeSpanHHmm(String last, String curr) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+            Date dateFirst = sdf.parse(last);
+            Date dateCurr = sdf.parse(curr);
+            long between = (dateCurr.getTime() - dateFirst.getTime()) / 1000;
+            long day1 = between / (24 * 3600);
+            long hour1 = between % (24 * 3600) / 3600;
+            long minute1 = between % 3600 / 60;
+            long second1 = between % 60 / 60;
+
+            long hour = day1 * 24 + hour1;
+            String pre = hour > 9 ? hour + "" : "0" + hour;
+            String suf = minute1 > 9 ? minute1 + "" : "0" + minute1;
+            return pre + ":" + suf;
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return "00:00";
+        }
+    }
+
 }
