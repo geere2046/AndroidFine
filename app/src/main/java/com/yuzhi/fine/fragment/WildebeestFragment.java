@@ -114,7 +114,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
 
                     mChart.invalidate();
 
-                    CompreRecord cr = DataSupport.find(CompreRecord.class,1);
+                    CompreRecord cr = DataSupport.findLast(CompreRecord.class);
                     if(cr != null) {
                         tvTravel.setText(CommUtil.floatToStr(cr.getTravelMeter(), 1));
                         tvMaxspeed.setText(CommUtil.floatToStr(cr.getMaxSpeed(), 1));

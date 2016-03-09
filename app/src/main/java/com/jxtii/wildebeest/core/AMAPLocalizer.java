@@ -187,14 +187,16 @@ public class AMAPLocalizer implements AMapLocationListener {
             }else{
                 CompreRecord cr = new CompreRecord();
                 cr.setCurrentTime(DateStr.yyyymmddHHmmssStr());
-                CompreRecord lastCr = DataSupport.find(CompreRecord.class,1);
-                float lastSpeed = lastCr.getMaxSpeed();
-                if(curSpeed > lastSpeed){
-                    cr.setMaxSpeed(curSpeed);
+                CompreRecord lastCr = DataSupport.findLast(CompreRecord.class);
+                if(lastCr != null){
+                    float lastSpeed = lastCr.getMaxSpeed();
+                    if(curSpeed > lastSpeed){
+                        cr.setMaxSpeed(curSpeed);
+                    }
+                    float lastDis = lastCr.getTravelMeter();
+                    cr.setTravelMeter(lastDis + curDistance);
+                    cr.update(lastCr.getId());
                 }
-                float lastDis = lastCr.getTravelMeter();
-                cr.setTravelMeter(lastDis + curDistance);
-                cr.update(1);
             }
 //            Log.i(TAG, "locinfo = " + locinfo);
         } else if (amapLocation != null && amapLocation.getErrorCode() != 0) {

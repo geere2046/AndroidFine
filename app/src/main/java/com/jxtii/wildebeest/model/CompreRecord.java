@@ -5,7 +5,9 @@ import org.litepal.crud.DataSupport;
 /**
  * Created by huangyc on 2016/3/8.
  */
-public class CompreRecord extends DataSupport{
+public class CompreRecord extends DataSupport {
+
+    private int id;
 
     private String beginTime;
 
@@ -14,6 +16,14 @@ public class CompreRecord extends DataSupport{
     private float maxSpeed;
 
     private float travelMeter;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public String getBeginTime() {
         return beginTime;

@@ -8,6 +8,8 @@ import org.litepal.crud.DataSupport;
  */
 public class PositionRecord extends DataSupport {
 
+    private int id;
+
     @Column(nullable = false)
     private double lat;
 
@@ -21,6 +23,14 @@ public class PositionRecord extends DataSupport {
     private float speed;
 
     private String extra;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public double getLat() {
         return lat;
