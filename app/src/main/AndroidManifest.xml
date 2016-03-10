@@ -39,6 +39,14 @@
             </intent-filter>
         </service>
 
+        <service android:name="com.jxtii.wildebeest.service.CoreService"
+            android:enabled="true"
+            android:label="角马的秘密">
+            <intent-filter>
+                <action android:name="com.jxtii.wildebeest.core_service"/>
+            </intent-filter>
+        </service>
+
         <service android:name="com.amap.api.location.APSService"/>
 
 

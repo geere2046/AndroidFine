@@ -73,17 +73,14 @@ public class TaskService extends Service {
         return START_STICKY;
     }
 
-    /**
-     * 上报定位信息
-     */
     void sendAmapLocInfo() {
         try {
             String locinfo = (amapLocalizer != null) ? amapLocalizer.locinfo : "";
             if(!TextUtils.isEmpty(locinfo)){
-                Log.w(TAG, locinfo);
+//                Log.w(TAG, locinfo);
             }
             int prCount = DataSupport.count(PositionRecord.class);
-            Log.e(TAG, ">>>>>>>>>"+prCount);
+//            Log.e(TAG, ">>>>>>>>>"+prCount);
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -123,9 +120,6 @@ public class TaskService extends Service {
         this.stopSelf();
     }
 
-    /**
-     * 停止定时任务
-     */
     void stopTimer() {
         if (mTimer != null) {
             mTimer.cancel();
