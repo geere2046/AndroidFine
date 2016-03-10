@@ -298,13 +298,13 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
         PendingIntent pt = PendingIntent.getBroadcast(context, 0, intent, 0);
         am.setRepeating(AlarmManager.RTC_WAKEUP, triggerAtTime, interval, pt);
 
-        Intent ii = new Intent();
+        /*Intent ii = new Intent();
         ii.setAction("com.jxtii.wildebeest.task_service");
         ii.setPackage("com.yuzhi.fine");
         //Implicit intents with startService are not safe
 //        ii.setClass(getActivity(), TaskService.class);
         ii.putExtra("interval", 2000);
-        getActivity().startService(ii);
+        getActivity().startService(ii);*/
     }
 
     void startReflash() {

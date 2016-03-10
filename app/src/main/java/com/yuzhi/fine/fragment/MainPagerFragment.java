@@ -57,7 +57,8 @@ public class MainPagerFragment extends Fragment {
                 return new WildebeestFragment();
             }
             if (position == 2) {
-                return new BufferKnifeFragment();
+//                return new BufferKnifeFragment();
+                return new SensorFragment();
             }
             return HomeFragment.newInstance(URLS[position % URLS.length]);
         }

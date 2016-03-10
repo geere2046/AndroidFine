@@ -43,5 +43,26 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
-
+    <string name="sensor_desc_1">加速度传感器（受重力影响）</string>
+    <string name="sensor_desc_2">地球磁场传感器</string>
+    <string name="sensor_desc_3">罗盘</string>
+    <string name="sensor_desc_4">陀螺仪</string>
+    <string name="sensor_desc_5">光线传感器(SI lux)</string>
+    <string name="sensor_desc_6">大气压强(hPa)</string>
+    <!-- <string name="sensor_desc_7">DEPRECATED!</string> -->
+    <string name="sensor_desc_8">距离传感器（在大多数设备中，这只报告一个近或远的状态）</string>
+    <string name="sensor_desc_9">三维矢量表示重力方向和大小</string>
+    <string name="sensor_desc_10">没有重力作用的加速度</string>
+    <string name="sensor_desc_11">旋转矢量计：绕轴旋转角度[x, y, z]</string>
+    <string name="sensor_desc_12">空气环境相对湿度</string>
+    <string name="sensor_desc_13">室内温度（摄氏度）</string>
+    <string name="lbl_vendor">供应商</string>
+    <string name="lbl_powerconsumption">功耗</string>
+    <string name="lbl_sensor_resolution">传感器分辨率</string>
+    <string name="lbl_sensor_version">版本</string>
+    <string name="lbl_min_delay">最小延迟</string>
+    <string name="lbl_range">范围</string>
+    <string name="lbl_unknown">unknown</string>
+    <string name="unit_consumption">" mA"</string>
+    <string name="unit_mindelay">" µs"</string>
 </resources>
