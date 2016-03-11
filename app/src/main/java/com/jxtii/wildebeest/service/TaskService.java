@@ -1,22 +1,24 @@
 package com.jxtii.wildebeest.service;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.jxtii.wildebeest.core.AMAPLocalizer;
+import com.jxtii.wildebeest.model.CompreRecord;
+import com.jxtii.wildebeest.model.PointRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
-import com.jxtii.wildebeest.util.CommUtil;
+import com.jxtii.wildebeest.util.CalPointUtil;
+import com.jxtii.wildebeest.util.DateStr;
+import com.jxtii.wildebeest.util.DistanceUtil;
 
 import org.litepal.crud.DataSupport;
 
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -77,10 +79,58 @@ public class TaskService extends Service {
         try {
             String locinfo = (amapLocalizer != null) ? amapLocalizer.locinfo : "";
             if(!TextUtils.isEmpty(locinfo)){
-//                Log.w(TAG, locinfo);
+                Log.w(TAG, locinfo);
             }
             int prCount = DataSupport.count(PositionRecord.class);
-//            Log.e(TAG, ">>>>>>>>>"+prCount);
+            Log.e(TAG, ">>>>>>>>> prCount = "+prCount);
+            /******************模拟GPS数据******************************/
+            double geoLat = 28.677822 + new Random().nextFloat()/2000;//TODO
+            double geoLng = 115.90674 + new Random().nextFloat()/2000;//TODO
+            float curSpeed = new Random().nextFloat() * 130;//TODO
+            PositionRecord pr = new PositionRecord();
+            pr.setLat(geoLat);
+            pr.setLng(geoLng);
+            pr.setDateStr(DateStr.yyyymmddHHmmssStr());
+            pr.setSpeed(curSpeed);
+            pr.save();
+            int crCount = DataSupport.count(CompreRecord.class);
+            Log.e(TAG, ">>>>>>>>>>>>> crCount + " + crCount);
+            if(crCount == 0){
+                CompreRecord cr = new CompreRecord();
+                cr.setBeginTime(DateStr.yyyymmddHHmmssStr());
+                cr.setCurrentTime(DateStr.yyyymmddHHmmssStr());
+                cr.setMaxSpeed(curSpeed);
+                cr.setTravelMeter(0);
+                cr.setSaveLat(geoLat);
+                cr.setSaveLng(geoLng);
+                cr.save();
+            }else{
+                CompreRecord cr = new CompreRecord();
+                cr.setCurrentTime(DateStr.yyyymmddHHmmssStr());
+                CompreRecord lastCr = DataSupport.findLast(CompreRecord.class);
+                if(lastCr != null){
+                    float lastSpeed = lastCr.getMaxSpeed();
+                    if(curSpeed > lastSpeed){
+                        cr.setMaxSpeed(curSpeed);
+                    }
+                    float lastDis = lastCr.getTravelMeter();
+                    float curDistance = (float)DistanceUtil.distance(geoLng,geoLat,lastCr.getSaveLng(),lastCr.getSaveLat());
+                    cr.setTravelMeter(lastDis + curDistance);
+                    cr.update(lastCr.getId());
+                }
+            }
+
+            int pointSpeed = CalPointUtil.calSpeeding(curSpeed);
+            if(pointSpeed > 0){
+                PointRecord pointRecord = new PointRecord();
+                pointRecord.setCreateTime(DateStr.yyyymmddHHmmssStr());
+                pointRecord.setEventType(1);
+                pointRecord.setRecord(curSpeed);
+                pointRecord.setPoint(pointSpeed);
+                pointRecord.save();
+            }
+            /******************模拟GPS数据******************************/
+
         }catch(Exception e){
             e.printStackTrace();
         }

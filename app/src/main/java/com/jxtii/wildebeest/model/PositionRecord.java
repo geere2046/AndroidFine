@@ -4,6 +4,8 @@ import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
 /**
+ * GPS输出关键点信息
+ *
  * Created by huangyc on 2016/3/7.
  */
 public class PositionRecord extends DataSupport {

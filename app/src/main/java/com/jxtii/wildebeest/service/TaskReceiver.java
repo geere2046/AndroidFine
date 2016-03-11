@@ -41,7 +41,7 @@ public class TaskReceiver extends BroadcastReceiver {
         intent.setPackage("com.yuzhi.fine");
         //Implicit intents with startService are not safe
 //        intent.setClass(ctx, TaskService.class);
-        intent.putExtra("interval", 2000);
+        intent.putExtra("interval", 4000);
         ctx.startService(intent);
 
         Intent intent2 = new Intent();

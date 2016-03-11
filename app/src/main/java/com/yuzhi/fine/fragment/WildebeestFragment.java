@@ -33,17 +33,15 @@ import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 import com.github.mikephil.charting.interfaces.datasets.IRadarDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.jxtii.wildebeest.model.CompreRecord;
+import com.jxtii.wildebeest.model.PointRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
 import com.jxtii.wildebeest.util.CommUtil;
 import com.yuzhi.fine.R;
 
 import org.litepal.crud.DataSupport;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Random;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -58,42 +56,72 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
     TimerTask timerTask;
     Typeface tf;
     String[] mParties = new String[]{
-            "急加速", "急减速", "急转弯", "疲劳", "超速", "路况"
+            "急加速", "急减速", "速度", "夜间驾驶", "行驶区域", "行驶时长", "行驶里程"
     };
 
     Handler handler = new Handler() {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case 0:
-                    int v5 = new Random().nextInt(100) % (100 - 10 + 1) + 10;
-                    int v6 = new Random().nextInt(100) % (100 - 10 + 1) + 10;
-                    int v7 = new Random().nextInt(100) % (100 - 10 + 1) + 10;
-                    int v8 = new Random().nextInt(100) % (100 - 10 + 1) + 10;
-                    int v9 = new Random().nextInt(100) % (100 - 10 + 1) + 10;
-                    int v10 = new Random().nextInt(100) % (100 - 10 + 1) + 10;
-                    tv5.setText("急加速：" + v5);
-                    tv6.setText("急减速：" + v6);
-                    tv7.setText("急转弯：" + v7);
-                    tv8.setText("疲劳：" + v8);
-                    tv9.setText("超速：" + v9);
-                    tv10.setText("路况：" + v10);
-                    paraVw.setVisibility(View.GONE);
+                    int rapidAcc = 90;
+                    int radidDec = 60;
+                    int speeding = 75;
+                    int v8 = 80;
+                    int v9 = 65;
+                    int v10 = 80;
+                    int v11 = 100;
 
-                    int cnt = 6;
+                    List<PointRecord> listSpeeding = DataSupport.where("eventType = ?", "1").find(PointRecord.class);
+                    if (listSpeeding != null && listSpeeding.size() > 0) {
+                        int sum = 0;
+                        for (PointRecord pointRecord : listSpeeding) {
+                            sum += pointRecord.getPoint();
+                        }
+                        speeding -= sum;
+                    }
+                    speeding = speeding > 0 ? speeding : 0;
+
+                    List<PointRecord> listRapidAcc = DataSupport.where("eventType = ?", "2").find(PointRecord.class);
+                    if (listRapidAcc != null && listRapidAcc.size() > 0) {
+                        int sum = 0;
+                        for (PointRecord pointRecord : listRapidAcc) {
+                            sum += pointRecord.getPoint();
+                        }
+                        rapidAcc -= sum;
+                    }
+                    rapidAcc = rapidAcc > 0 ? rapidAcc : 0;
+
+                    List<PointRecord> listRapidDec = DataSupport.where("eventType = ?", "3").find(PointRecord.class);
+                    if (listRapidDec != null && listRapidDec.size() > 0) {
+                        int sum = 0;
+                        for (PointRecord pointRecord : listRapidDec) {
+                            sum += pointRecord.getPoint();
+                        }
+                        radidDec -= sum;
+                    }
+                    radidDec = radidDec > 0 ? radidDec : 0;
+
+                    double score = speeding * 0.25 + rapidAcc * 0.25 + radidDec * 0.35 + v8 * 0.05 + v9 * 0.05
+                            + v10 * 0.025 + v11 * 0.025;
+
+                    bbb.setText(CommUtil.floatToStr((float) score, 1));
+
+                    int cnt = 7;
                     ArrayList<Entry> yVals1 = new ArrayList<Entry>();
-                    yVals1.add(new Entry(v5, 0));
-                    yVals1.add(new Entry(v6, 1));
-                    yVals1.add(new Entry(v7, 2));
+                    yVals1.add(new Entry(rapidAcc, 0));
+                    yVals1.add(new Entry(radidDec, 1));
+                    yVals1.add(new Entry(speeding, 2));
                     yVals1.add(new Entry(v8, 3));
                     yVals1.add(new Entry(v9, 4));
                     yVals1.add(new Entry(v10, 5));
+                    yVals1.add(new Entry(v11, 6));
 
                     ArrayList<String> xVals = new ArrayList<String>();
 
                     for (int i = 0; i < cnt; i++)
                         xVals.add(mParties[i % mParties.length]);
 
-                    RadarDataSet set1 = new RadarDataSet(yVals1, "Set 1");
+                    RadarDataSet set1 = new RadarDataSet(yVals1, "驾驶评分");
                     set1.setColor(ColorTemplate.VORDIPLOM_COLORS[0]);
                     set1.setFillColor(ColorTemplate.VORDIPLOM_COLORS[0]);
                     set1.setDrawFilled(true);
@@ -115,7 +143,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
                     mChart.invalidate();
 
                     CompreRecord cr = DataSupport.findLast(CompreRecord.class);
-                    if(cr != null) {
+                    if (cr != null) {
                         tvTravel.setText(CommUtil.floatToStr(cr.getTravelMeter(), 1));
                         tvMaxspeed.setText(CommUtil.floatToStr(cr.getMaxSpeed(), 1));
                         tvTimepass.setText(CommUtil.timeSpanHHmm(cr.getBeginTime(), cr.getCurrentTime()));
@@ -172,6 +200,8 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
     TextView tvMaxspeed;
     @Bind(R.id.tv_avespeed)
     TextView tvAvespeed;
+    @Bind(R.id.bbb)
+    TextView bbb;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {

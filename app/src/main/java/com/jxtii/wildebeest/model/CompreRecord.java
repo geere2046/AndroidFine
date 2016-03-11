@@ -3,6 +3,8 @@ package com.jxtii.wildebeest.model;
 import org.litepal.crud.DataSupport;
 
 /**
+ * 记录运行信息类
+ *
  * Created by huangyc on 2016/3/8.
  */
 public class CompreRecord extends DataSupport {
@@ -16,6 +18,10 @@ public class CompreRecord extends DataSupport {
     private float maxSpeed;
 
     private float travelMeter;
+
+    private double saveLat;
+
+    private double saveLng;
 
     public int getId() {
         return id;
@@ -55,5 +61,21 @@ public class CompreRecord extends DataSupport {
 
     public void setTravelMeter(float travelMeter) {
         this.travelMeter = travelMeter;
+    }
+
+    public double getSaveLat() {
+        return saveLat;
+    }
+
+    public void setSaveLat(double saveLat) {
+        this.saveLat = saveLat;
+    }
+
+    public double getSaveLng() {
+        return saveLng;
+    }
+
+    public void setSaveLng(double saveLng) {
+        this.saveLng = saveLng;
     }
 }

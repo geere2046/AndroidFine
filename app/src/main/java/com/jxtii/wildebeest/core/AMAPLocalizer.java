@@ -13,6 +13,7 @@ import com.jxtii.wildebeest.model.CompreRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
 import com.jxtii.wildebeest.util.CommUtil;
 import com.jxtii.wildebeest.util.DateStr;
+import com.jxtii.wildebeest.util.DistanceUtil;
 
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
@@ -164,16 +165,18 @@ public class AMAPLocalizer implements AMapLocationListener {
             locinfo = geoLat + ";" + geoLng + ";定位器不做地址解析;"
                     + amapLocation.getProvider() + ";" + extra;
 
+            float curSpeed = 0;
+            if (amapLocation.hasSpeed()){
+                curSpeed = amapLocation.getSpeed() * 18 / 5;
+            }
+
             PositionRecord pr = new PositionRecord();
             pr.setLat(geoLat);
             pr.setLng(geoLng);
             pr.setDateStr(DateStr.yyyymmddHHmmssStr());
             pr.setExtra(amapLocation.toStr());
+            pr.setSpeed(curSpeed);
             pr.save();
-
-            //模拟当前速度、时间段内行驶米
-            float curSpeed = new Random().nextFloat() * 130;//130km/h maxspeed
-            float curDistance = new Random().nextFloat() * 36 * 2;// per second max distance 36m * 2s
 
             int crCount = DataSupport.count(CompreRecord.class);
             Log.e(TAG,">>>>>>>>>>>>>"+crCount);
@@ -183,17 +186,20 @@ public class AMAPLocalizer implements AMapLocationListener {
                 cr.setCurrentTime(DateStr.yyyymmddHHmmssStr());
                 cr.setMaxSpeed(curSpeed);
                 cr.setTravelMeter(0);
+                cr.setSaveLat(geoLat);
+                cr.setSaveLng(geoLng);
                 cr.save();
-            }else{
+            }else {
                 CompreRecord cr = new CompreRecord();
                 cr.setCurrentTime(DateStr.yyyymmddHHmmssStr());
                 CompreRecord lastCr = DataSupport.findLast(CompreRecord.class);
-                if(lastCr != null){
+                if (lastCr != null) {
                     float lastSpeed = lastCr.getMaxSpeed();
-                    if(curSpeed > lastSpeed){
+                    if (curSpeed > lastSpeed) {
                         cr.setMaxSpeed(curSpeed);
                     }
                     float lastDis = lastCr.getTravelMeter();
+                    float curDistance = (float) DistanceUtil.distance(geoLng, geoLat, lastCr.getSaveLng(), lastCr.getSaveLat());
                     cr.setTravelMeter(lastDis + curDistance);
                     cr.update(lastCr.getId());
                 }
