@@ -10,7 +10,9 @@ import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
 import com.jxtii.wildebeest.model.CompreRecord;
+import com.jxtii.wildebeest.model.PointRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
+import com.jxtii.wildebeest.util.CalPointUtil;
 import com.jxtii.wildebeest.util.CommUtil;
 import com.jxtii.wildebeest.util.DateStr;
 import com.jxtii.wildebeest.util.DistanceUtil;
@@ -18,6 +20,7 @@ import com.jxtii.wildebeest.util.DistanceUtil;
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
 
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -164,6 +167,7 @@ public class AMAPLocalizer implements AMapLocationListener {
             Double geoLng = amapLocation.getLongitude();
             locinfo = geoLat + ";" + geoLng + ";定位器不做地址解析;"
                     + amapLocation.getProvider() + ";" + extra;
+            Log.i(TAG, "locinfo = " + locinfo);
 
             float curSpeed = 0;
             if (amapLocation.hasSpeed()){
@@ -179,7 +183,7 @@ public class AMAPLocalizer implements AMapLocationListener {
             pr.save();
 
             int crCount = DataSupport.count(CompreRecord.class);
-            Log.e(TAG,">>>>>>>>>>>>>"+crCount);
+            Log.e(TAG, ">>>>>>>>>>>>>" + crCount);
             if(crCount == 0){
                 CompreRecord cr = new CompreRecord();
                 cr.setBeginTime(DateStr.yyyymmddHHmmssStr());
@@ -201,10 +205,21 @@ public class AMAPLocalizer implements AMapLocationListener {
                     float lastDis = lastCr.getTravelMeter();
                     float curDistance = (float) DistanceUtil.distance(geoLng, geoLat, lastCr.getSaveLng(), lastCr.getSaveLat());
                     cr.setTravelMeter(lastDis + curDistance);
+                    cr.setSaveLat(geoLat);
+                    cr.setSaveLng(geoLng);
                     cr.update(lastCr.getId());
                 }
             }
-//            Log.i(TAG, "locinfo = " + locinfo);
+            int pointSpeed = CalPointUtil.calSpeeding(curSpeed);
+            if(pointSpeed > 0){
+                PointRecord pointRecord = new PointRecord();
+                pointRecord.setCreateTime(DateStr.yyyymmddHHmmssStr());
+                pointRecord.setEventType(1);
+                pointRecord.setRecord(curSpeed);
+                pointRecord.setPoint(pointSpeed);
+                pointRecord.save();
+            }
+
         } else if (amapLocation != null && amapLocation.getErrorCode() != 0) {
             Log.w(TAG,
                     "amapLocation.getErrorCode() = "

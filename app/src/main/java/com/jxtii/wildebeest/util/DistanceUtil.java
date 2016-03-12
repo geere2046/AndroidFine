@@ -1,6 +1,10 @@
 package com.jxtii.wildebeest.util;
 
+import android.util.Log;
+
 public class DistanceUtil {
+
+	static String TAG = DistanceUtil.class.getSimpleName();
 
 	/**
 	 * 计算地球上任意两点(经纬度)距离
@@ -17,6 +21,7 @@ public class DistanceUtil {
 	 */
 	public static double distance(double long1, double lat1, double long2,
 			double lat2) {
+		Log.e(TAG,"long1 = "+long1+" , long2 = " + long2 + ", lat1 = " + lat1 + ", lat2 = " + lat2);
 		double a, b, R;
 		R = 6378137; // 地球半径
 		lat1 = lat1 * Math.PI / 180.0;
@@ -31,6 +36,7 @@ public class DistanceUtil {
 				* R
 				* Math.asin(Math.sqrt(sa2 * sa2 + Math.cos(lat1)
 						* Math.cos(lat2) * sb2 * sb2));
+		Log.e(TAG, "d = " + d);
 		return d;
 	}
 

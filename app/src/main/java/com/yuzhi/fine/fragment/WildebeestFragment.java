@@ -63,12 +63,12 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case 0:
-                    int rapidAcc = 90;
-                    int radidDec = 60;
-                    int speeding = 75;
-                    int v8 = 80;
-                    int v9 = 65;
-                    int v10 = 80;
+                    int rapidAcc = 100;
+                    int radidDec = 100;
+                    int speeding = 100;
+                    int v8 = 100;
+                    int v9 = 100;
+                    int v10 = 100;
                     int v11 = 100;
 
                     List<PointRecord> listSpeeding = DataSupport.where("eventType = ?", "1").find(PointRecord.class);
@@ -150,6 +150,11 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
                         long timeFin = CommUtil.timeSpanSecond(cr.getBeginTime(), cr.getCurrentTime());
                         float aveSp = cr.getTravelMeter() * 18 / (timeFin * 5);
                         tvAvespeed.setText(CommUtil.floatToStr(aveSp, 1));
+                    }else {
+                        tvTravel.setText("");
+                        tvMaxspeed.setText("");
+                        tvTimepass.setText("");
+                        tvAvespeed.setText("");
                     }
                     break;
             }
@@ -225,7 +230,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
     }
 
     void initData() {
-
+        startReflash();
     }
 
     void initView() {
@@ -314,6 +319,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
     void startLocService() {
         DataSupport.deleteAll(PositionRecord.class);
         DataSupport.deleteAll(CompreRecord.class);
+        DataSupport.deleteAll(PointRecord.class);
         startReflash();
 
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
@@ -344,7 +350,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
                 handler.sendEmptyMessage(0);
             }
         };
-        timer.scheduleAtFixedRate(timerTask, 10 * 1000, 5 * 1000);
+        timer.scheduleAtFixedRate(timerTask, 2 * 1000, 5 * 1000);
     }
 
     void stopReflash() {

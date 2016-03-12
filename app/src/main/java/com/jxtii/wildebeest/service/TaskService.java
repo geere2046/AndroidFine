@@ -79,12 +79,13 @@ public class TaskService extends Service {
         try {
             String locinfo = (amapLocalizer != null) ? amapLocalizer.locinfo : "";
             if(!TextUtils.isEmpty(locinfo)){
-                Log.w(TAG, locinfo);
+//                Log.w(TAG, locinfo);
+                locinfo ="";
             }
             int prCount = DataSupport.count(PositionRecord.class);
-            Log.e(TAG, ">>>>>>>>> prCount = "+prCount);
+            Log.w(TAG, ">>>>>>>>> prCount = "+prCount);
             /******************模拟GPS数据******************************/
-            double geoLat = 28.677822 + new Random().nextFloat()/2000;//TODO
+            /*double geoLat = 28.677822 + new Random().nextFloat()/2000;//TODO
             double geoLng = 115.90674 + new Random().nextFloat()/2000;//TODO
             float curSpeed = new Random().nextFloat() * 130;//TODO
             PositionRecord pr = new PositionRecord();
@@ -128,7 +129,7 @@ public class TaskService extends Service {
                 pointRecord.setRecord(curSpeed);
                 pointRecord.setPoint(pointSpeed);
                 pointRecord.save();
-            }
+            }*/
             /******************模拟GPS数据******************************/
 
         }catch(Exception e){

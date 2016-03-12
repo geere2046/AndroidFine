@@ -15,6 +15,7 @@ import android.util.Log;
 import com.jxtii.wildebeest.model.PointRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
 import com.jxtii.wildebeest.util.CalPointUtil;
+import com.jxtii.wildebeest.util.CommUtil;
 import com.jxtii.wildebeest.util.DateStr;
 
 import org.litepal.crud.DataSupport;
@@ -140,32 +141,36 @@ public class CoreService extends Service implements SensorEventListener{
             double clampGAve = clamp(gAve,0.0,1.0);
 
             if (gAve > 0.3) {
-//                Log.e(TAG, "gAve = " + gAve);
-//                Log.e(TAG, "clampGAve = " + clampGAve);
+                Log.e(TAG, "gAve = " + gAve);
+                Log.e(TAG, "clampGAve = " + clampGAve);
 //                Log.e(TAG, "event.values[0] = " + event.values[0]);
 //                Log.e(TAG, "event.values[1] = " + event.values[1]);
 //                Log.e(TAG, "event.values[2] = " + event.values[2]);
 //                Log.e(TAG, "gValue[0] = " + gValue[0]);
 //                Log.e(TAG, "gValue[1] = " + gValue[1]);
 //                Log.e(TAG, "gValue[2] = " + gValue[2]);
-                List<PositionRecord> list = DataSupport.order("id desc").limit(2).find(PositionRecord.class);
+                List<PositionRecord> list = DataSupport.order("dateStr desc").limit(2).find(PositionRecord.class);
                 if(list!=null&&list.size()>1) {
                     int pointCal = CalPointUtil.calAccOrDec(gAve);
                     PointRecord pointRecord = new PointRecord();
                     pointRecord.setCreateTime(DateStr.yyyymmddHHmmssStr());
                     pointRecord.setRecord((float) gAve);
-                    if (list.get(0).getSpeed() > list.get(1).getSpeed()) {
-                        //加速状态
-                        pointRecord.setEventType(2);
-                        pointRecord.setPoint(pointCal+5);
-                        pointRecord.save();
-                    } else if (list.get(0).getSpeed() < list.get(1).getSpeed()) {
-                        //减速状态
-                        pointRecord.setEventType(3);
-                        pointRecord.setPoint(pointCal+10);
-                        pointRecord.save();
-                    } else {
-                        //无法判断加、减速
+                    long timeFin = CommUtil.timeSpanSecond(list.get(0).getDateStr(), list.get(1).getDateStr());
+                    Log.e(TAG, "timeFin = " + timeFin);
+                    if(timeFin >= 60){
+                        if (list.get(0).getSpeed() > list.get(1).getSpeed()) {
+                            //加速状态
+                            pointRecord.setEventType(2);
+                            pointRecord.setPoint(pointCal+5);
+                            pointRecord.save();
+                        } else if (list.get(0).getSpeed() < list.get(1).getSpeed()) {
+                            //减速状态
+                            pointRecord.setEventType(3);
+                            pointRecord.setPoint(pointCal+10);
+                            pointRecord.save();
+                        } else {
+                            //无法判断加、减速
+                        }
                     }
                 }
             }
