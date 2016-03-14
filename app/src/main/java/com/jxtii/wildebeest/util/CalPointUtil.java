@@ -6,7 +6,7 @@ package com.jxtii.wildebeest.util;
  */
 public class CalPointUtil {
 
-    static float maxSpeed = 60;//超速阀值60
+    static float maxSpeed = 40;//超速阀值60
     static double gThreshold = 0.3;
 
     /**

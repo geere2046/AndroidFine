@@ -25,7 +25,7 @@ public class AppContext extends LitePalApplication {
     @Override
     public void onCreate() {
         super.onCreate();
-        LeakCanary.install(this);
+//        LeakCanary.install(this);
         registerUncaughtExceptionHandler();
     }
 

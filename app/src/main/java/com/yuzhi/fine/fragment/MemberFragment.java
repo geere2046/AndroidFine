@@ -26,8 +26,8 @@ public class MemberFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         context = getActivity();
-        initData();
-        initView();
+//        initData();
+//        initView();
     }
 
     void initView() {

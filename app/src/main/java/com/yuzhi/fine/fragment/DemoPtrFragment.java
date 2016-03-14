@@ -150,7 +150,7 @@ public class DemoPtrFragment extends Fragment {
             return;
         }
         param.setPno(pno);
-        HttpClient.getRecommendShops(param, new HttpResponseHandler() {
+       /* HttpClient.getRecommendShops(param, new HttpResponseHandler() {
             @Override
             public void onSuccess(String body) {
                 mPtrFrame.refreshComplete();
@@ -170,7 +170,7 @@ public class DemoPtrFragment extends Fragment {
                 mPtrFrame.refreshComplete();
                 listView.setLoadMoreViewTextError();
             }
-        });
+        });*/
     }
 
     @Override

@@ -40,7 +40,9 @@ public class SplashActivity extends FragmentActivity {
 
         boolean firstTimeUse = SharedPreferences.getInstance().getBoolean("first-time-use", true);
         if(firstTimeUse) {
-            initGuideGallery();
+            //屏蔽引导页
+//            initGuideGallery();
+            initLaunchLogo();
         } else {
             initLaunchLogo();
         }
