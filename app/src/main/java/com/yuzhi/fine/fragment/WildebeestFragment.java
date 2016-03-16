@@ -78,6 +78,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
                             sum += pointRecord.getPoint();
                         }
                         speeding -= sum;
+                        mParties[2] = mParties[2] + "+" + listSpeeding.size();
                     }
                     speeding = speeding > 0 ? speeding : 0;
 
@@ -88,6 +89,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
                             sum += pointRecord.getPoint();
                         }
                         rapidAcc -= sum;
+                        mParties[0] = mParties[0] + "+" + listRapidAcc.size();
                     }
                     rapidAcc = rapidAcc > 0 ? rapidAcc : 0;
 
@@ -98,6 +100,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
                             sum += pointRecord.getPoint();
                         }
                         radidDec -= sum;
+                        mParties[1] = mParties[1] + "+" + listRapidDec.size();
                     }
                     radidDec = radidDec > 0 ? radidDec : 0;
 

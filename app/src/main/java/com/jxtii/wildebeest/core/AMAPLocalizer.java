@@ -17,6 +17,7 @@ import com.jxtii.wildebeest.util.CommUtil;
 import com.jxtii.wildebeest.util.DateStr;
 import com.jxtii.wildebeest.util.DistanceUtil;
 
+import org.greenrobot.eventbus.EventBus;
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
 
@@ -126,6 +127,10 @@ public class AMAPLocalizer implements AMapLocationListener {
     }
 
     public void onLocationChanged(AMapLocation amapLocation) {
+
+        Log.e(TAG, amapLocation.toStr());
+        EventBus.getDefault().post(amapLocation);
+
         if (amapLocation != null && amapLocation.getErrorCode() == 0) {
             String extra = "";
 //            Log.w(TAG,

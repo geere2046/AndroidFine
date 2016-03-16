@@ -8,6 +8,7 @@ import android.os.PowerManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.amap.api.location.AMapLocation;
 import com.jxtii.wildebeest.core.AMAPLocalizer;
 import com.jxtii.wildebeest.model.CompreRecord;
 import com.jxtii.wildebeest.model.PointRecord;
@@ -16,6 +17,9 @@ import com.jxtii.wildebeest.util.CalPointUtil;
 import com.jxtii.wildebeest.util.DateStr;
 import com.jxtii.wildebeest.util.DistanceUtil;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.litepal.crud.DataSupport;
 
 import java.util.Random;
@@ -45,6 +49,7 @@ public class TaskService extends Service {
         Log.w(TAG, ">>>>>>>onCreate service");
         ctx = TaskService.this;
         amapLocalizer = AMAPLocalizer.getInstance(ctx);
+        EventBus.getDefault().register(this);
     }
 
     @Override
@@ -56,7 +61,7 @@ public class TaskService extends Service {
             interval = intent.getIntExtra("interval", 900);
             Log.w(TAG, ">>>>>>>onStartCommand interval = " + interval);
             if (amapLocalizer != null)
-                amapLocalizer.setLocationManager(true, "gps", interval);
+                amapLocalizer.setLocationManager(true, "high", interval);
             stopTimer();
             if (mTimer == null)
                 mTimer = new Timer();
@@ -64,7 +69,7 @@ public class TaskService extends Service {
                 mTimerTask = new TimerTask() {
                     public void run() {
                         acquireWakeLock(ctx);
-                        sendAmapLocInfo();
+//                        sendAmapLocInfo();
                         releaseWakeLock();
                     }
                 };
@@ -73,6 +78,11 @@ public class TaskService extends Service {
                     interval);
         }
         return START_STICKY;
+    }
+
+    @Subscribe(threadMode = ThreadMode.POSTING)
+    public void onEvent(AMapLocation amapLocation){
+        Log.w(TAG, amapLocation.toStr());
     }
 
     void sendAmapLocInfo() {
@@ -168,6 +178,7 @@ public class TaskService extends Service {
         if (amapLocalizer != null)
             amapLocalizer.setLocationManager(false, "", 0);
         stopTimer();
+        EventBus.getDefault().unregister(this);
         this.stopSelf();
     }
 
