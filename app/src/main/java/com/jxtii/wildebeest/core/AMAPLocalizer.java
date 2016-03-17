@@ -129,7 +129,7 @@ public class AMAPLocalizer implements AMapLocationListener {
 
     public void onLocationChanged(AMapLocation amapLocation) {
 
-        Log.e(TAG, amapLocation.toStr());
+        Log.w(TAG, amapLocation.toStr());
         EventBus.getDefault().post(amapLocation);
 
         if (amapLocation != null && amapLocation.getErrorCode() == 0) {
@@ -206,7 +206,7 @@ public class AMAPLocalizer implements AMapLocationListener {
             pr.save();
 
             int crCount = DataSupport.count(CompreRecord.class);
-            Log.e(TAG, ">>>>>>>>>>>>>" + crCount);
+            Log.d(TAG, ">>>>>>>>>>>>>" + crCount);
             if(crCount == 0){
                 CompreRecord cr = new CompreRecord();
                 cr.setBeginTime(DateStr.yyyymmddHHmmssStr());

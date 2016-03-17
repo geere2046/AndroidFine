@@ -119,6 +119,14 @@ public class DateStr {
 	}
 
 	// 获取系统时间，转换成 yyMMddHHmmss 格式的日期字符串
+	public static String yyyymmddHHmmssSSSStr() {
+		Date myDate = new Date(System.currentTimeMillis()); // 获取系统时间
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyymmddHHmmssSSS");
+		dateStr = formatter.format(myDate);
+		return dateStr;
+	}
+
+	// 获取系统时间，转换成 yyMMddHHmmss 格式的日期字符串
 	public static String ddHHmmssssStr() {
 		Date myDate = new Date(System.currentTimeMillis()); // 获取系统时间
 		SimpleDateFormat formatter = new SimpleDateFormat("ddHHmmssss");

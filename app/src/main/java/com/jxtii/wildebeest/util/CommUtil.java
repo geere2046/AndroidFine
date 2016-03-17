@@ -18,6 +18,7 @@ public class CommUtil {
     public static final String START_INTENT = "com.jxtii.wildebeest.task_receiver";
     public static final String STOP_INTENT = "com.jxtii.wildebeest.stop_receiver";
     public static final String TASK_SERVICE = "com.jxtii.wildebeest.service.TaskService";
+    //TODO 添加枚举类
 
     /**
      * 判断GPS是否打开
