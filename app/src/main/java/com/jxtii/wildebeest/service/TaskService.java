@@ -61,7 +61,7 @@ public class TaskService extends Service {
             interval = intent.getIntExtra("interval", 900);
             Log.w(TAG, ">>>>>>>onStartCommand interval = " + interval);
             if (amapLocalizer != null)
-                amapLocalizer.setLocationManager(true, "high", interval);
+                amapLocalizer.setLocationManager(true, "gps", interval);
             stopTimer();
             if (mTimer == null)
                 mTimer = new Timer();
@@ -175,8 +175,9 @@ public class TaskService extends Service {
 //        long triggerAtTime = SystemClock.elapsedRealtime() + 5 * 1000;
 //        am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtTime,
 //                pendingIntent);
-        if (amapLocalizer != null)
-            amapLocalizer.setLocationManager(false, "", 0);
+        //暂时屏蔽停止定位服务
+//        if (amapLocalizer != null)
+//            amapLocalizer.setLocationManager(false, "", 0);
         stopTimer();
         EventBus.getDefault().unregister(this);
         this.stopSelf();

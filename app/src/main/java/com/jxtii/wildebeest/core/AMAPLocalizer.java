@@ -9,6 +9,7 @@ import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
+import com.jxtii.wildebeest.bus.GpsInfoBus;
 import com.jxtii.wildebeest.model.CompreRecord;
 import com.jxtii.wildebeest.model.PointRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
@@ -150,8 +151,25 @@ public class AMAPLocalizer implements AMapLocationListener {
                     extra += (",海拔:"
                             + CommUtil.floatToStr(
                             (float) amapLocation.getAltitude(), 1) + "米");
-                if (amapLocation.hasBearing())
+                if (amapLocation.hasBearing()){
                     extra += (",方向:北偏东" + amapLocation.getBearing() + "度");
+                    GpsInfoBus gpsInfoBus = new GpsInfoBus();
+                    gpsInfoBus.setxDrift(Math.sin(amapLocation.getBearing()));
+                    gpsInfoBus.setyDrift(Math.cos(amapLocation.getBearing()));
+                    gpsInfoBus.setzDrift(0);
+                    gpsInfoBus.setCreateTime(DateStr.yyyymmddHHmmssStr());
+                    EventBus.getDefault().post(gpsInfoBus);
+                }else{
+                    //TODO 模拟方向数据
+                    amapLocation.setBearing(0);
+                    extra += (",方向:北偏东" + amapLocation.getBearing() + "度");
+                    GpsInfoBus gpsInfoBus = new GpsInfoBus();
+                    gpsInfoBus.setxDrift(Math.sin(amapLocation.getBearing()));
+                    gpsInfoBus.setyDrift(Math.cos(amapLocation.getBearing()));
+                    gpsInfoBus.setzDrift(0);
+                    gpsInfoBus.setCreateTime(DateStr.yyyymmddHHmmssStr());
+                    EventBus.getDefault().post(gpsInfoBus);
+                }
             } else if ("lbs".equals(amapLocation.getProvider())) {
                 if (amapLocation.hasAccuracy()) {
                     Float acc = amapLocation.getAccuracy();

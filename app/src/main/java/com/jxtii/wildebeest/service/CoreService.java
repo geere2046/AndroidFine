@@ -12,12 +12,18 @@ import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.jxtii.wildebeest.bus.GpsInfoBus;
 import com.jxtii.wildebeest.model.PointRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
 import com.jxtii.wildebeest.util.CalPointUtil;
 import com.jxtii.wildebeest.util.CommUtil;
 import com.jxtii.wildebeest.util.DateStr;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.litepal.crud.DataSupport;
 
 import java.util.List;
@@ -38,6 +44,15 @@ public class CoreService extends Service implements SensorEventListener{
     float[] gValue = new float[3];
     float MIN_ACC = 0.01f;
 
+    float[] accelerometerValues=new float[3];
+    float[] magneticFieldValues=new float[3];
+    float[] values=new float[3];
+    float[] rotate=new float[9];
+    GpsInfoBus pushBus = null;
+    long gpsBearing = 60;//gps方向有效时间
+
+    int i = 0;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -53,6 +68,14 @@ public class CoreService extends Service implements SensorEventListener{
             //SENSOR_DELAY_GAME 20ms
             manager.registerListener(this,list.get(0),SensorManager.SENSOR_DELAY_NORMAL);
         }
+
+        Sensor aSensor = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        Sensor mSensor = manager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        if (aSensor != null)
+            manager.registerListener(this, aSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        if (mSensor != null)
+            manager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        EventBus.getDefault().register(this);
     }
 
     @Override
@@ -109,6 +132,7 @@ public class CoreService extends Service implements SensorEventListener{
     void stopSelfSevice() {
         Log.w(TAG,">>>>>>>>  stopSelfSevice");
         stopTimer();
+        EventBus.getDefault().unregister(this);
         this.stopSelf();
     }
 
@@ -175,8 +199,91 @@ public class CoreService extends Service implements SensorEventListener{
                 }
             }
         }
+
+        if(event.sensor.getType()==Sensor.TYPE_ACCELEROMETER){
+            accelerometerValues=event.values;
+        }
+        if(event.sensor.getType()==Sensor.TYPE_MAGNETIC_FIELD){
+            magneticFieldValues=event.values;
+        }
+
+        SensorManager.getRotationMatrix(rotate, null, accelerometerValues, magneticFieldValues);
+        SensorManager.getOrientation(rotate, values);
+        //经过SensorManager.getOrientation(rotate, values);得到的values值为弧度
+        //转换为角度
+        values[0]=(float)Math.toDegrees(values[0]);
+        values[1]=(float)Math.toDegrees(values[1]);
+        values[2]=(float)Math.toDegrees(values[2]);
+
+        i++;
+//        Log.w(TAG,">>>>" + i);
+        if(i%25 == 0){
+//            Log.e(TAG,">>>>" + i);
+            Log.w(TAG, "values[0] = " + values[0]);
+            Log.w(TAG, "values[1] = " + values[1]);
+            Log.w(TAG, "values[2] = " + values[2]);
+
+            double angleZc = Double.parseDouble(String.valueOf(-1*values[0]));
+            double angleXc = Double.parseDouble(String.valueOf(-1*values[1]));
+            double angleYc = Double.parseDouble(String.valueOf(values[2]));
+
+            double[][] doubleFc = {{Math.cos(angleYc), 0, -1 * Math.sin(angleYc)}, {0, 1, 0}, {Math.sin(angleYc), 0, Math.cos(angleYc)}};
+            double[][] doubleSc = {{1,0,0},{0,Math.cos(angleXc),Math.sin(angleXc)},{0,-1*Math.sin(angleXc),Math.cos(angleXc)}};
+            double[][] doubleTc = {{Math.cos(angleZc),Math.sin(angleZc),0},{-1*Math.sin(angleZc),Math.cos(angleZc),0},{0,0,1}};
+
+            Array2DRowRealMatrix matrixFc = new Array2DRowRealMatrix(doubleFc);
+            Array2DRowRealMatrix matrixSc = new Array2DRowRealMatrix(doubleSc);
+            Array2DRowRealMatrix matrixTc = new Array2DRowRealMatrix(doubleTc);
+
+            Array2DRowRealMatrix transfor = matrixFc.multiply(matrixSc).multiply(matrixTc);
+
+            if (this.pushBus != null) {
+                String nowTime = DateStr.yyyymmddHHmmssStr();
+                Boolean isValid = CommUtil.timeSpanSecond(this.pushBus.getCreateTime(), nowTime) > gpsBearing ? false : true;
+                if (isValid) {
+                    double[][] doubleEarth = {{this.pushBus.getxDrift(), this.pushBus.getyDrift(), this.pushBus.getzDrift()}};
+                    Array2DRowRealMatrix earth = new Array2DRowRealMatrix(doubleEarth);
+                    Array2DRowRealMatrix earth2phone = earth.multiply(transfor);
+                    double[][] vDirect = earth2phone.getData();
+
+                    double[] vDir = {vDirect[0][0], vDirect[0][1], vDirect[0][2]};
+                    double[] aDir = {Double.parseDouble(String.valueOf(gValue[0])),
+                            Double.parseDouble(String.valueOf(gValue[1])),
+                            Double.parseDouble(String.valueOf(gValue[2]))};
+
+                    ArrayRealVector vfc = new ArrayRealVector(vDir);
+                    ArrayRealVector vSc = new ArrayRealVector(aDir);
+                    double cosine = vfc.cosine(vSc);
+                    Log.e(TAG, "cosine = " + cosine);
+                    if(cosine == 0){
+                        Log.e(TAG, "力与速度垂直");
+                    }else if(cosine > 0){
+                        Log.e(TAG, "加速");
+                    }else{
+                        Log.e(TAG, "减速");
+                    }
+                } else {
+                    Log.w(TAG, "this.pushBus invalid");
+                }
+            } else {
+                Log.w(TAG, "this.pushBus is null");
+            }
+        }
     }
 
+    @Subscribe(threadMode = ThreadMode.POSTING)
+    public void onEvent(GpsInfoBus gpsInfoBus){
+        Log.w(TAG, gpsInfoBus.toStr());
+        this.pushBus = gpsInfoBus;
+
+    }
+
+    /**
+     * 根据上下阀值过滤数据
+     *
+     * @param m
+     * @return
+     */
     float[] mechFilter(float m[]) {
         for (int i=0; i<3; ++i)
             if (!(m[i]>MIN_ACC || m[i]<-MIN_ACC))
@@ -184,6 +291,14 @@ public class CoreService extends Service implements SensorEventListener{
         return m;
     }
 
+    /**
+     * 根据上下阀值修正数据
+     *
+     * @param num
+     * @param min
+     * @param max
+     * @return
+     */
     double clamp(double num, double min, double max){
         return num < min ? min : (num > max ? max : num);
     }
