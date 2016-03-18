@@ -1,6 +1,4 @@
-package com.jxtii.wildebeest.bus;
-
-import android.os.Bundle;
+package com.jxtii.wildebeest.bean;
 
 import org.json.JSONObject;
 

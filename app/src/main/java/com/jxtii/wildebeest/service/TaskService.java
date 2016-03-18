@@ -95,9 +95,9 @@ public class TaskService extends Service {
             int prCount = DataSupport.count(PositionRecord.class);
             Log.w(TAG, ">>>>>>>>> prCount = "+prCount);
             /******************模拟GPS数据******************************/
-            /*double geoLat = 28.677822 + new Random().nextFloat()/2000;//TODO
-            double geoLng = 115.90674 + new Random().nextFloat()/2000;//TODO
-            float curSpeed = new Random().nextFloat() * 130;//TODO
+            /*double geoLat = 28.677822 + new Random().nextFloat()/2000;
+            double geoLng = 115.90674 + new Random().nextFloat()/2000;
+            float curSpeed = new Random().nextFloat() * 130;
             PositionRecord pr = new PositionRecord();
             pr.setLat(geoLat);
             pr.setLng(geoLng);

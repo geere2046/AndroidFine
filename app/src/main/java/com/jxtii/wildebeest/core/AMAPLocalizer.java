@@ -9,7 +9,7 @@ import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
-import com.jxtii.wildebeest.bus.GpsInfoBus;
+import com.jxtii.wildebeest.bean.GpsInfoBus;
 import com.jxtii.wildebeest.model.CompreRecord;
 import com.jxtii.wildebeest.model.PointRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
@@ -21,9 +21,6 @@ import com.jxtii.wildebeest.util.DistanceUtil;
 import org.greenrobot.eventbus.EventBus;
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
-
-import java.util.List;
-import java.util.Random;
 
 /**
  * Created by huangyc on 2016/3/4.
@@ -106,7 +103,7 @@ public class AMAPLocalizer implements AMapLocationListener {
                 locationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Device_Sensors);
                 Log.i(TAG,"Device_Sensors");
             } else {
-                //TODO 设置该选项将延长定位返回时长30s，仅在高精度模式单次定位下有效
+                //设置该选项将延长定位返回时长30s，仅在高精度模式单次定位下有效
                 locationOption.setGpsFirst(true);
                 locationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
                 Log.i(TAG,"Hight_Accuracy");

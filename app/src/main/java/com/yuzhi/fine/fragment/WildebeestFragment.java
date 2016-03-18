@@ -78,7 +78,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
                             sum += pointRecord.getPoint();
                         }
                         speeding -= sum;
-                        mParties[2] = mParties[2] + "+" + listSpeeding.size();
+                        mParties[2] = mParties[2].substring(0,2) + "+" + listSpeeding.size();
                     }
                     speeding = speeding > 0 ? speeding : 0;
 
@@ -89,7 +89,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
                             sum += pointRecord.getPoint();
                         }
                         rapidAcc -= sum;
-                        mParties[0] = mParties[0] + "+" + listRapidAcc.size();
+                        mParties[0] = mParties[0].substring(0,3) + "+" + listRapidAcc.size();
                     }
                     rapidAcc = rapidAcc > 0 ? rapidAcc : 0;
 
@@ -100,7 +100,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
                             sum += pointRecord.getPoint();
                         }
                         radidDec -= sum;
-                        mParties[1] = mParties[1] + "+" + listRapidDec.size();
+                        mParties[1] = mParties[1].substring(0,3) + "+" + listRapidDec.size();
                     }
                     radidDec = radidDec > 0 ? radidDec : 0;
 
@@ -125,8 +125,10 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
                         xVals.add(mParties[i % mParties.length]);
 
                     RadarDataSet set1 = new RadarDataSet(yVals1, "驾驶评分");
-                    set1.setColor(ColorTemplate.VORDIPLOM_COLORS[0]);
-                    set1.setFillColor(ColorTemplate.VORDIPLOM_COLORS[0]);
+                    set1.setColor(ColorTemplate.COLORFUL_COLORS[0]);
+                    set1.setFillColor(ColorTemplate.COLORFUL_COLORS[0]);
+                    set1.setValueTextColor(ColorTemplate.COLORFUL_COLORS[1]);
+                    set1.setValueTextSize(40);
                     set1.setDrawFilled(true);
                     set1.setLineWidth(2f);
 

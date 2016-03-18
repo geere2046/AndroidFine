@@ -12,9 +12,10 @@ import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.jxtii.wildebeest.bus.GpsInfoBus;
+import com.jxtii.wildebeest.bean.AccJudgeBean;
+import com.jxtii.wildebeest.bean.GpsInfoBus;
 import com.jxtii.wildebeest.model.PointRecord;
-import com.jxtii.wildebeest.model.PositionRecord;
+import com.jxtii.wildebeest.util.AccelerationEnum;
 import com.jxtii.wildebeest.util.CalPointUtil;
 import com.jxtii.wildebeest.util.CommUtil;
 import com.jxtii.wildebeest.util.DateStr;
@@ -42,14 +43,16 @@ public class CoreService extends Service implements SensorEventListener{
     PowerManager.WakeLock m_wakeLockObj;
     Boolean haveSensor =false;
     float[] gValue = new float[3];
-    float MIN_ACC = 0.01f;
+    float minAcc = CommUtil.MIN_ACC;
 
     float[] accelerometerValues=new float[3];
     float[] magneticFieldValues=new float[3];
     float[] values=new float[3];
     float[] rotate=new float[9];
     GpsInfoBus pushBus = null;
-    long gpsBearing = 60;//gps方向有效时间
+    long gpsBearing = CommUtil.GPS_BEARING;
+    long accValid = CommUtil.ACC_VALID_THRESHOLD;
+    AccJudgeBean accJudgeBean;
 
     int iCount = 0;
     int jCount = 0;
@@ -202,76 +205,141 @@ public class CoreService extends Service implements SensorEventListener{
 
 
             Log.i(TAG, ">>>> iCount = " + iCount + " jCount = " + jCount + " kCount = " + kCount);
-//            if (iCount % 25 == 0) {
                 Log.d(TAG, "values[0] = " + values[0]);
                 Log.d(TAG, "values[1] = " + values[1]);
                 Log.d(TAG, "values[2] = " + values[2]);
 
-                double angleZc = Double.parseDouble(String.valueOf(-1 * values[0]));
-                double angleXc = Double.parseDouble(String.valueOf(-1 * values[1]));
-                double angleYc = Double.parseDouble(String.valueOf(values[2]));
+            if (this.pushBus != null) {
+                String nowTime = DateStr.yyyymmddHHmmssStr();
+                Boolean isValid = CommUtil.timeSpanSecond(this.pushBus.getCreateTime(), nowTime) > gpsBearing ? false : true;
+                if (isValid) {
+                    double angleZc = Double.parseDouble(String.valueOf(-1 * values[0]));
+                    double angleXc = Double.parseDouble(String.valueOf(-1 * values[1]));
+                    double angleYc = Double.parseDouble(String.valueOf(values[2]));
 
-                double[][] doubleFc = {{Math.cos(angleYc), 0, -1 * Math.sin(angleYc)}, {0, 1, 0}, {Math.sin(angleYc), 0, Math.cos(angleYc)}};
-                double[][] doubleSc = {{1, 0, 0}, {0, Math.cos(angleXc), Math.sin(angleXc)}, {0, -1 * Math.sin(angleXc), Math.cos(angleXc)}};
-                double[][] doubleTc = {{Math.cos(angleZc), Math.sin(angleZc), 0}, {-1 * Math.sin(angleZc), Math.cos(angleZc), 0}, {0, 0, 1}};
+                    double[][] doubleFc = {{Math.cos(angleYc), 0, -1 * Math.sin(angleYc)}, {0, 1, 0}, {Math.sin(angleYc), 0, Math.cos(angleYc)}};
+                    double[][] doubleSc = {{1, 0, 0}, {0, Math.cos(angleXc), Math.sin(angleXc)}, {0, -1 * Math.sin(angleXc), Math.cos(angleXc)}};
+                    double[][] doubleTc = {{Math.cos(angleZc), Math.sin(angleZc), 0}, {-1 * Math.sin(angleZc), Math.cos(angleZc), 0}, {0, 0, 1}};
 
-                Array2DRowRealMatrix matrixFc = new Array2DRowRealMatrix(doubleFc);
-                Array2DRowRealMatrix matrixSc = new Array2DRowRealMatrix(doubleSc);
-                Array2DRowRealMatrix matrixTc = new Array2DRowRealMatrix(doubleTc);
+                    Array2DRowRealMatrix matrixFc = new Array2DRowRealMatrix(doubleFc);
+                    Array2DRowRealMatrix matrixSc = new Array2DRowRealMatrix(doubleSc);
+                    Array2DRowRealMatrix matrixTc = new Array2DRowRealMatrix(doubleTc);
 
-                Array2DRowRealMatrix transfor = matrixFc.multiply(matrixSc).multiply(matrixTc);
-
-                if (this.pushBus != null) {
-                    String nowTime = DateStr.yyyymmddHHmmssStr();
-                    Boolean isValid = CommUtil.timeSpanSecond(this.pushBus.getCreateTime(), nowTime) > gpsBearing ? false : true;
-                    if (isValid) {
-                        double[][] doubleEarth = {{this.pushBus.getxDrift(), this.pushBus.getyDrift(), this.pushBus.getzDrift()}};
-                        Array2DRowRealMatrix earth = new Array2DRowRealMatrix(doubleEarth);
-                        Array2DRowRealMatrix earth2phone = earth.multiply(transfor);
-                        double[][] vDirect = earth2phone.getData();
-                        double[] vDir = {vDirect[0][0], vDirect[0][1], vDirect[0][2]};
-                        if (gValue[0] == 0 && gValue[1] == 0 && gValue[2] == 0) {
-                            Log.i(TAG, "acceleration is too low");
-                        } else {
-                            double[] aDir = {Double.parseDouble(String.valueOf(gValue[0])),
-                                    Double.parseDouble(String.valueOf(gValue[1])),
-                                    Double.parseDouble(String.valueOf(gValue[2]))};
-
-                            ArrayRealVector vfc = new ArrayRealVector(vDir);
-                            ArrayRealVector vSc = new ArrayRealVector(aDir);
-                            double cosine = vfc.cosine(vSc);
-                            Log.w(TAG, "cosine = " + cosine);
-
-                            double gAve = Math.abs(Math.sqrt(gValue[0] * gValue[0] + gValue[1] * gValue[1] + gValue[2] * gValue[2]));
-                            double clampGAve = clamp(gAve, 0.0, 1.0);
-                            int pointCal = CalPointUtil.calAccOrDec(gAve);
-                            PointRecord pointRecord = new PointRecord();
-                            pointRecord.setCreateTime(DateStr.yyyymmddHHmmssSSSStr());
-                            pointRecord.setRecord((float) clampGAve);
-                            //TODO 加速度需持续0.3秒（关键指标放到CommUtil中），此处应做判断过滤
-                            if (cosine == 0) {
-                                Log.w(TAG, "力与速度垂直");
-                            } else if (cosine > 0) {
-                                Log.w(TAG, "加速");
-                                pointRecord.setEventType(2);
-                                pointRecord.setPoint(pointCal + 5);
-                                pointRecord.save();
-                            } else {
-                                Log.w(TAG, "减速");
-                                pointRecord.setEventType(3);
-                                pointRecord.setPoint(pointCal + 10);
-                                pointRecord.save();
-                            }
-                            int pr = DataSupport.count(PointRecord.class);
-                            Log.w(TAG, "PointRecord count = " + pr);
-                        }
+                    Array2DRowRealMatrix transfor = matrixFc.multiply(matrixSc).multiply(matrixTc);
+                    double[][] doubleEarth = {{this.pushBus.getxDrift(), this.pushBus.getyDrift(), this.pushBus.getzDrift()}};
+                    Array2DRowRealMatrix earth = new Array2DRowRealMatrix(doubleEarth);
+                    Array2DRowRealMatrix earth2phone = earth.multiply(transfor);
+                    double[][] vDirect = earth2phone.getData();
+                    double[] vDir = {vDirect[0][0], vDirect[0][1], vDirect[0][2]};
+                    if (gValue[0] == 0 && gValue[1] == 0 && gValue[2] == 0) {
+                        Log.i(TAG, "acceleration is too low");
                     } else {
-                        Log.w(TAG, "this.pushBus invalid");
+                        double[] aDir = {Double.parseDouble(String.valueOf(gValue[0])),
+                                Double.parseDouble(String.valueOf(gValue[1])),
+                                Double.parseDouble(String.valueOf(gValue[2]))};
+
+                        ArrayRealVector vfc = new ArrayRealVector(vDir);
+                        ArrayRealVector vSc = new ArrayRealVector(aDir);
+                        double cosine = vfc.cosine(vSc);
+                        Log.w(TAG, "cosine = " + cosine);
+
+                        double gAve = Math.abs(Math.sqrt(gValue[0] * gValue[0] + gValue[1] * gValue[1] + gValue[2] * gValue[2]));
+                        double clampGAve = clamp(gAve, 0.0, 1.0);
+                        int pointCal = CalPointUtil.calAccOrDec(gAve);
+                        PointRecord pointRecord = new PointRecord();
+                        pointRecord.setCreateTime(DateStr.yyyymmddHHmmssSSSStr());
+                        pointRecord.setRecord((float) clampGAve);
+
+                        if (cosine == 0) {
+                            Log.d(TAG, "瞬时力与速度垂直");
+                            accJudgeBean = new AccJudgeBean();
+                            accJudgeBean.setAccState(AccelerationEnum.UNKOWN_STATE);
+                            accJudgeBean.setBeginTime(System.currentTimeMillis());
+                            accJudgeBean.setDuration(0);
+                        } else if (cosine > 0) {
+                            Log.d(TAG, "瞬时加速");
+                            if(accJudgeBean == null){
+                                accJudgeBean = new AccJudgeBean();
+                                accJudgeBean.setAccState(AccelerationEnum.ACC_STATE);
+                                accJudgeBean.setBeginTime(System.currentTimeMillis());
+                                accJudgeBean.setDuration(0);
+                            }else{
+                                switch (accJudgeBean.getAccState()){
+                                    case ACC_STATE:
+                                        long duration = System.currentTimeMillis() - accJudgeBean.getBeginTime();
+                                        if(duration > CommUtil.ACC_VALID_THRESHOLD){
+                                            Log.w(TAG, "持续加速");
+                                            int pr = DataSupport.count(PointRecord.class);
+                                            Log.w(TAG, "PointRecord count = " + pr);
+
+                                            accJudgeBean = null;
+                                            pointRecord.setEventType(2);
+                                            pointRecord.setPoint(pointCal + CommUtil.BASIC_SCORE_ACC);
+                                            pointRecord.save();
+                                        }else{
+                                            accJudgeBean.setDuration(duration);
+                                        }
+                                        break;
+                                    case DEC_STATE:
+                                        accJudgeBean = new AccJudgeBean();
+                                        accJudgeBean.setAccState(AccelerationEnum.ACC_STATE);
+                                        accJudgeBean.setBeginTime(System.currentTimeMillis());
+                                        accJudgeBean.setDuration(0);
+                                        break;
+                                    case UNKOWN_STATE:
+                                        accJudgeBean = new AccJudgeBean();
+                                        accJudgeBean.setAccState(AccelerationEnum.ACC_STATE);
+                                        accJudgeBean.setBeginTime(System.currentTimeMillis());
+                                        accJudgeBean.setDuration(0);
+                                        break;
+                                }
+                            }
+                        } else {
+                            Log.d(TAG, "瞬时减速");
+                            if(accJudgeBean == null){
+                                accJudgeBean = new AccJudgeBean();
+                                accJudgeBean.setAccState(AccelerationEnum.DEC_STATE);
+                                accJudgeBean.setBeginTime(System.currentTimeMillis());
+                                accJudgeBean.setDuration(0);
+                            }else{
+                                switch (accJudgeBean.getAccState()){
+                                    case ACC_STATE:
+                                        accJudgeBean = new AccJudgeBean();
+                                        accJudgeBean.setAccState(AccelerationEnum.DEC_STATE);
+                                        accJudgeBean.setBeginTime(System.currentTimeMillis());
+                                        accJudgeBean.setDuration(0);
+                                        break;
+                                    case DEC_STATE:
+                                        long duration = System.currentTimeMillis() - accJudgeBean.getBeginTime();
+                                        if(duration > CommUtil.ACC_VALID_THRESHOLD){
+                                            Log.w(TAG, "持续减速");
+                                            int pr = DataSupport.count(PointRecord.class);
+                                            Log.w(TAG, "PointRecord count = " + pr);
+
+                                            accJudgeBean = null;
+                                            pointRecord.setEventType(3);
+                                            pointRecord.setPoint(pointCal + CommUtil.BASIC_SCORE_DEC);
+                                            pointRecord.save();
+                                        }else{
+                                            accJudgeBean.setDuration(duration);
+                                        }
+                                        break;
+                                    case UNKOWN_STATE:
+                                        accJudgeBean = new AccJudgeBean();
+                                        accJudgeBean.setAccState(AccelerationEnum.DEC_STATE);
+                                        accJudgeBean.setBeginTime(System.currentTimeMillis());
+                                        accJudgeBean.setDuration(0);
+                                        break;
+                                }
+                            }
+                        }
                     }
                 } else {
-                    Log.w(TAG, "this.pushBus is null");
+                    Log.w(TAG, "this.pushBus invalid");
                 }
-//            }
+            } else {
+                Log.w(TAG, "this.pushBus is null");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -292,7 +360,7 @@ public class CoreService extends Service implements SensorEventListener{
      */
     float[] mechFilter(float m[]) {
         for (int i=0; i<3; ++i)
-            if (!(m[i]>MIN_ACC || m[i]<-MIN_ACC))
+            if (!(m[i]>minAcc || m[i]<-minAcc))
                 m[i]=0;
         return m;
     }
