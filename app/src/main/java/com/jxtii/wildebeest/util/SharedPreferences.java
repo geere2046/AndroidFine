@@ -1,4 +1,4 @@
-package com.yuzhi.fine.utils;
+package com.jxtii.wildebeest.util;
 
 import android.content.Context;
 import android.content.SharedPreferences.Editor;

@@ -14,6 +14,7 @@ import android.util.Log;
 
 import com.jxtii.wildebeest.bean.AccJudgeBean;
 import com.jxtii.wildebeest.bean.GpsInfoBus;
+import com.jxtii.wildebeest.bean.PointRecordBus;
 import com.jxtii.wildebeest.model.PointRecord;
 import com.jxtii.wildebeest.util.AccelerationEnum;
 import com.jxtii.wildebeest.util.CalPointUtil;
@@ -204,10 +205,10 @@ public class CoreService extends Service implements SensorEventListener{
             values[2] = (float) Math.toDegrees(values[2]);
 
 
-            Log.i(TAG, ">>>> iCount = " + iCount + " jCount = " + jCount + " kCount = " + kCount);
-                Log.d(TAG, "values[0] = " + values[0]);
-                Log.d(TAG, "values[1] = " + values[1]);
-                Log.d(TAG, "values[2] = " + values[2]);
+//            Log.i(TAG, ">>>> iCount = " + iCount + " jCount = " + jCount + " kCount = " + kCount);
+//                Log.d(TAG, "values[0] = " + values[0]);
+//                Log.d(TAG, "values[1] = " + values[1]);
+//                Log.d(TAG, "values[2] = " + values[2]);
 
             if (this.pushBus != null) {
                 String nowTime = DateStr.yyyymmddHHmmssStr();
@@ -276,6 +277,12 @@ public class CoreService extends Service implements SensorEventListener{
                                             pointRecord.setEventType(2);
                                             pointRecord.setPoint(pointCal + CommUtil.BASIC_SCORE_ACC);
                                             pointRecord.save();
+
+                                            PointRecordBus bus = new PointRecordBus();
+                                            bus.setPoint(pointRecord.getPoint());
+                                            bus.setEventType(pointRecord.getEventType());
+                                            bus.setRecord(pointRecord.getRecord());
+                                            EventBus.getDefault().post(bus);
                                         }else{
                                             accJudgeBean.setDuration(duration);
                                         }
@@ -320,6 +327,12 @@ public class CoreService extends Service implements SensorEventListener{
                                             pointRecord.setEventType(3);
                                             pointRecord.setPoint(pointCal + CommUtil.BASIC_SCORE_DEC);
                                             pointRecord.save();
+
+                                            PointRecordBus bus = new PointRecordBus();
+                                            bus.setPoint(pointRecord.getPoint());
+                                            bus.setEventType(pointRecord.getEventType());
+                                            bus.setRecord(pointRecord.getRecord());
+                                            EventBus.getDefault().post(bus);
                                         }else{
                                             accJudgeBean.setDuration(duration);
                                         }
@@ -338,7 +351,7 @@ public class CoreService extends Service implements SensorEventListener{
                     Log.w(TAG, "this.pushBus invalid");
                 }
             } else {
-                Log.w(TAG, "this.pushBus is null");
+//                Log.w(TAG, "this.pushBus is null");
             }
         } catch (Exception e) {
             e.printStackTrace();

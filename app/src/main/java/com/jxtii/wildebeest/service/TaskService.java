@@ -8,20 +8,27 @@ import android.os.PowerManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.alibaba.fastjson.JSON;
 import com.amap.api.location.AMapLocation;
+import com.jxtii.wildebeest.bean.PointRecordBus;
 import com.jxtii.wildebeest.core.AMAPLocalizer;
 import com.jxtii.wildebeest.model.CompreRecord;
 import com.jxtii.wildebeest.model.PointRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
+import com.jxtii.wildebeest.model.RouteLog;
 import com.jxtii.wildebeest.util.CalPointUtil;
 import com.jxtii.wildebeest.util.DateStr;
 import com.jxtii.wildebeest.util.DistanceUtil;
+import com.jxtii.wildebeest.util.SharedPreferences;
+import com.jxtii.wildebeest.webservice.WebserviceClient;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.litepal.crud.DataSupport;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -38,6 +45,8 @@ public class TaskService extends Service {
     TimerTask mTimerTask;
     int interval = 900;
     PowerManager.WakeLock m_wakeLockObj;
+    AMapLocation amapLocation;
+    AMapLocation amapLocationClone;
 
     public IBinder onBind(Intent intent) {
         return null;
@@ -69,7 +78,7 @@ public class TaskService extends Service {
                 mTimerTask = new TimerTask() {
                     public void run() {
                         acquireWakeLock(ctx);
-//                        sendAmapLocInfo();
+                        uploadLocInfo();
                         releaseWakeLock();
                     }
                 };
@@ -81,68 +90,75 @@ public class TaskService extends Service {
     }
 
     @Subscribe(threadMode = ThreadMode.POSTING)
-    public void onEvent(AMapLocation amapLocation){
-        Log.w(TAG, amapLocation.toStr());
+    public void oreceiveAMapLocation(AMapLocation amapLocation){
+        Log.w(TAG, "AMapLocation is " + amapLocation.toStr());
+        this.amapLocation = amapLocation;
+        this.amapLocationClone = amapLocation;
     }
 
-    void sendAmapLocInfo() {
+    @Subscribe(threadMode = ThreadMode.ASYNC)
+    public void receivePointRecordBus(PointRecordBus bus) {
+        Log.w(TAG, "PointRecordBus is " + bus.toStr());
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("sqlKey", "sql_insert_route_factor");
+        params.put("sqlType", "sql");
+        RouteLog log = DataSupport.findLast(RouteLog.class);
+        if(log != null){
+            params.put("rRouteId", log.getpRouteId());
+            if (this.amapLocationClone != null) {
+                params.put("rLat", this.amapLocationClone.getLatitude());
+                params.put("rLon", this.amapLocationClone.getLongitude());
+                params.put("rAlt", this.amapLocationClone.getAltitude());
+            }else{
+                params.put("rLat", 0.0);
+                params.put("rLon", 0.0);
+                params.put("rAlt", 0.0);
+            }
+            if (bus.getEventType() == 1) {
+                params.put("rSpeed", Double.valueOf(String.valueOf(bus.getRecord())));
+                params.put("rType", "00");
+                params.put("rAccelerate",0.0);
+            } else if (bus.getEventType() == 2) {
+                params.put("rAccelerate", Double.valueOf(String.valueOf(bus.getRecord())));
+                params.put("rType", "01");
+                params.put("rSpeed",0.0);
+            } else if (bus.getEventType() == 3) {
+                params.put("rAccelerate", Double.valueOf(String.valueOf(bus.getRecord())));
+                params.put("rType", "02");
+                params.put("rSpeed",0.0);
+            }
+            String paramStr = JSON.toJSONString(params);
+            new WebserviceClient().updateData(paramStr);
+        }
+    }
+
+    void uploadLocInfo() {
         try {
             String locinfo = (amapLocalizer != null) ? amapLocalizer.locinfo : "";
-            if(!TextUtils.isEmpty(locinfo)){
-//                Log.w(TAG, locinfo);
-                locinfo ="";
+            if (!TextUtils.isEmpty(locinfo)) {
+                locinfo = "";
+                Log.w(TAG, locinfo);
             }
-            int prCount = DataSupport.count(PositionRecord.class);
-            Log.w(TAG, ">>>>>>>>> prCount = "+prCount);
-            /******************模拟GPS数据******************************/
-            /*double geoLat = 28.677822 + new Random().nextFloat()/2000;
-            double geoLng = 115.90674 + new Random().nextFloat()/2000;
-            float curSpeed = new Random().nextFloat() * 130;
-            PositionRecord pr = new PositionRecord();
-            pr.setLat(geoLat);
-            pr.setLng(geoLng);
-            pr.setDateStr(DateStr.yyyymmddHHmmssStr());
-            pr.setSpeed(curSpeed);
-            pr.save();
-            int crCount = DataSupport.count(CompreRecord.class);
-            Log.e(TAG, ">>>>>>>>>>>>> crCount + " + crCount);
-            if(crCount == 0){
-                CompreRecord cr = new CompreRecord();
-                cr.setBeginTime(DateStr.yyyymmddHHmmssStr());
-                cr.setCurrentTime(DateStr.yyyymmddHHmmssStr());
-                cr.setMaxSpeed(curSpeed);
-                cr.setTravelMeter(0);
-                cr.setSaveLat(geoLat);
-                cr.setSaveLng(geoLng);
-                cr.save();
-            }else{
-                CompreRecord cr = new CompreRecord();
-                cr.setCurrentTime(DateStr.yyyymmddHHmmssStr());
-                CompreRecord lastCr = DataSupport.findLast(CompreRecord.class);
-                if(lastCr != null){
-                    float lastSpeed = lastCr.getMaxSpeed();
-                    if(curSpeed > lastSpeed){
-                        cr.setMaxSpeed(curSpeed);
-                    }
-                    float lastDis = lastCr.getTravelMeter();
-                    float curDistance = (float)DistanceUtil.distance(geoLng,geoLat,lastCr.getSaveLng(),lastCr.getSaveLat());
-                    cr.setTravelMeter(lastDis + curDistance);
-                    cr.update(lastCr.getId());
+            if (this.amapLocation != null) {
+                Map<String, Object> params = new HashMap<String, Object>();
+                params.put("sqlKey", "sql_insert_location_info");
+                params.put("sqlType", "sql");
+                RouteLog log = DataSupport.findLast(RouteLog.class);
+                if(log != null){
+                    params.put("routeId", log.getpRouteId());
+                    params.put("lat", this.amapLocation.getLatitude());
+                    params.put("lng", this.amapLocation.getLongitude());
+                    params.put("alt", this.amapLocation.getAltitude());
+                    params.put("speed", this.amapLocation.getSpeed());
+                    params.put("accelerate", 0);
+                    params.put("addr", this.amapLocation.getAddress());
+                    params.put("loctime", DateStr.yyyymmddHHmmssStr());
+                    String paramStr = JSON.toJSONString(params);
+                    new WebserviceClient().updateData(paramStr);
+                    this.amapLocation = null;
                 }
             }
-
-            int pointSpeed = CalPointUtil.calSpeeding(curSpeed);
-            if(pointSpeed > 0){
-                PointRecord pointRecord = new PointRecord();
-                pointRecord.setCreateTime(DateStr.yyyymmddHHmmssStr());
-                pointRecord.setEventType(1);
-                pointRecord.setRecord(curSpeed);
-                pointRecord.setPoint(pointSpeed);
-                pointRecord.save();
-            }*/
-            /******************模拟GPS数据******************************/
-
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

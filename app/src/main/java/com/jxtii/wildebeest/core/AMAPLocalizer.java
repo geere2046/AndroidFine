@@ -10,6 +10,7 @@ import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
 import com.jxtii.wildebeest.bean.GpsInfoBus;
+import com.jxtii.wildebeest.bean.PointRecordBus;
 import com.jxtii.wildebeest.model.CompreRecord;
 import com.jxtii.wildebeest.model.PointRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
@@ -238,6 +239,12 @@ public class AMAPLocalizer implements AMapLocationListener {
                 pointRecord.setRecord(curSpeed);
                 pointRecord.setPoint(pointSpeed);
                 pointRecord.save();
+
+                PointRecordBus bus = new PointRecordBus();
+                bus.setPoint(pointRecord.getPoint());
+                bus.setEventType(pointRecord.getEventType());
+                bus.setRecord(pointRecord.getRecord());
+                EventBus.getDefault().post(bus);
             }
 
         } else if (amapLocation != null && amapLocation.getErrorCode() != 0) {

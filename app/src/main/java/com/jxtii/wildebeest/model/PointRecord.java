@@ -13,7 +13,7 @@ public class PointRecord extends DataSupport{
 
     private int eventType;//扣分类型，1超速2急加速3急减速
 
-    private float record;//被扣分值
+    private float record;//原扣分因子
 
     private int point;//被扣分数
 

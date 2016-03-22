@@ -11,6 +11,7 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +22,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.alibaba.fastjson.JSON;
 import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.RadarChart;
 import com.github.mikephil.charting.components.Legend;
@@ -32,16 +34,24 @@ import com.github.mikephil.charting.data.RadarDataSet;
 import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 import com.github.mikephil.charting.interfaces.datasets.IRadarDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.jxtii.wildebeest.bean.PubData;
 import com.jxtii.wildebeest.model.CompreRecord;
 import com.jxtii.wildebeest.model.PointRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
+import com.jxtii.wildebeest.model.RouteLog;
 import com.jxtii.wildebeest.util.CommUtil;
+import com.jxtii.wildebeest.util.SharedPreferences;
+import com.jxtii.wildebeest.webservice.WebserviceClient;
 import com.yuzhi.fine.R;
 
 import org.litepal.crud.DataSupport;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -50,6 +60,7 @@ import butterknife.ButterKnife;
 
 public class WildebeestFragment extends Fragment implements View.OnClickListener {
 
+    String TAG = WildebeestFragment.class.getSimpleName();
     Context context;
     static final int GPS_OPEN_STATUS = 1;
     Timer timer;
@@ -276,12 +287,32 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
             case R.id.btn_start:
                 showToast("start");
                 initLocService();
+                uploadInitInfo();
                 break;
             case R.id.btn_finish:
                 showToast("end");
                 stopLocService();
                 break;
         }
+    }
+
+    void uploadInitInfo() {
+        new Thread() {
+            public void run() {
+                Map<String, Object> params = new HashMap<String, Object>();
+                params.put("sqlKey", "proc_init_route_info");
+                params.put("sqlType", "proc");
+                params.put("employeeId", "12345678");//TODO 员工ID需补充
+                String paramStr = JSON.toJSONString(params);
+                PubData pubData = new WebserviceClient().updateData(paramStr);
+                if (pubData != null && "00".equals(pubData.getCode())) {
+                    String proId = (String) pubData.getData().get("pr_route_id");
+                    RouteLog log = new RouteLog();
+                    log.setpRouteId(proId);
+                    log.save();
+                }
+            }
+        }.start();
     }
 
     void initLocService() {
