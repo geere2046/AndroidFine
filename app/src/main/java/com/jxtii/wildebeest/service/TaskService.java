@@ -11,15 +11,10 @@ import android.util.Log;
 import com.alibaba.fastjson.JSON;
 import com.amap.api.location.AMapLocation;
 import com.jxtii.wildebeest.bean.PointRecordBus;
+import com.jxtii.wildebeest.bean.PubData;
 import com.jxtii.wildebeest.core.AMAPLocalizer;
-import com.jxtii.wildebeest.model.CompreRecord;
-import com.jxtii.wildebeest.model.PointRecord;
-import com.jxtii.wildebeest.model.PositionRecord;
 import com.jxtii.wildebeest.model.RouteLog;
-import com.jxtii.wildebeest.util.CalPointUtil;
 import com.jxtii.wildebeest.util.DateStr;
-import com.jxtii.wildebeest.util.DistanceUtil;
-import com.jxtii.wildebeest.util.SharedPreferences;
 import com.jxtii.wildebeest.webservice.WebserviceClient;
 
 import org.greenrobot.eventbus.EventBus;
@@ -29,7 +24,6 @@ import org.litepal.crud.DataSupport;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -100,35 +94,85 @@ public class TaskService extends Service {
     public void receivePointRecordBus(PointRecordBus bus) {
         Log.w(TAG, "PointRecordBus is " + bus.toStr());
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("sqlKey", "sql_insert_route_factor");
-        params.put("sqlType", "sql");
         RouteLog log = DataSupport.findLast(RouteLog.class);
-        if(log != null){
+        if (log != null) {
             params.put("rRouteId", log.getpRouteId());
             if (this.amapLocationClone != null) {
                 params.put("rLat", this.amapLocationClone.getLatitude());
                 params.put("rLon", this.amapLocationClone.getLongitude());
                 params.put("rAlt", this.amapLocationClone.getAltitude());
-            }else{
+                if (bus.getEventType() == 1) {
+                    params.put("sqlKey", "nosql");
+                    params.put("sqlType", "nosql");
+                    params.put("rSpeed", Double.valueOf(String.valueOf(bus.getRecord())));
+                    params.put("rType", "00");
+                    params.put("rAccelerate", 0.0);
+                    params.put("geoType", "gcj");
+                    Map<String, Object> config = new HashMap<String, Object>();
+                    config.put("interfaceName", "pjRouteFactorSpeeding");
+                    config.put("asyn", "false");
+                    params.put("interfaceConfig", config);
+                    String paramStr = JSON.toJSONString(params);
+                    Log.w(TAG, "paramStr = " + paramStr);
+                    PubData pubData = new WebserviceClient().loadData(paramStr);
+                    Log.w(TAG, "pubData.getCode() = " + pubData.getCode());
+                    if(pubData.getData() != null){
+                        Log.w(TAG, "pubData.getData() = " + JSON.toJSONString(pubData.getData()));
+                    }
+                } else {
+                    if (bus.getEventType() == 2) {
+                        params.put("rAccelerate", Double.valueOf(String.valueOf(bus.getRecord())));
+                        params.put("rType", "01");
+                        params.put("rSpeed", 0.0);
+                    } else if (bus.getEventType() == 3) {
+                        params.put("rAccelerate", Double.valueOf(String.valueOf(bus.getRecord())));
+                        params.put("rType", "02");
+                        params.put("rSpeed", 0.0);
+                    }
+                    params.put("sqlKey", "nosql");
+                    params.put("sqlType", "nosql");
+                    params.put("geoType", "gcj");
+                    Map<String, Object> config = new HashMap<String, Object>();
+                    config.put("interfaceName", "pjRouteFactorInterface");
+                    config.put("asyn", "false");
+                    params.put("interfaceConfig", config);
+                    String paramStr = JSON.toJSONString(params);
+                    Log.w(TAG, "paramStr = " + paramStr);
+                    PubData pubData = new WebserviceClient().loadData(paramStr);
+                    Log.w(TAG, "pubData.getCode() = " + pubData.getCode());
+                    if(pubData.getData() != null){
+                        Log.w(TAG, "pubData.getData() = " + JSON.toJSONString(pubData.getData()));
+                    }
+                }
+                Map<String, Object> paramAfter = new HashMap<String, Object>();
+                paramAfter.put("sqlKey", "nosql");
+                paramAfter.put("sqlType", "nosql");
+                paramAfter.put("rRouteId", log.getpRouteId());
+                paramAfter.put("rLat", this.amapLocationClone.getLatitude());
+                paramAfter.put("rLon", this.amapLocationClone.getLongitude());
+                paramAfter.put("rAlt", this.amapLocationClone.getAltitude());
+                paramAfter.put("rSpeed", this.amapLocationClone.getSpeed());
+                paramAfter.put("rAccelerate", 0);
+                paramAfter.put("addr", this.amapLocationClone.getAddress());
+                paramAfter.put("loctime", DateStr.yyyymmddHHmmssStr());
+                Map<String, Object> config = new HashMap<String, Object>();
+                config.put("interfaceName", "pjRouteLocation");
+                config.put("asyn", "false");
+                paramAfter.put("interfaceConfig", config);
+                String paramStr = JSON.toJSONString(paramAfter);
+                Log.w(TAG, "paramStr = " + paramStr);
+                PubData pubData = new WebserviceClient().loadData(paramStr);
+                Log.w(TAG, "pubData.getCode() = " + pubData.getCode());
+                if(pubData.getData() != null){
+                    Log.w(TAG, "pubData.getData() = " + JSON.toJSONString(pubData.getData()));
+                }
+                this.amapLocationClone = null;
+            } else {
                 params.put("rLat", 0.0);
                 params.put("rLon", 0.0);
                 params.put("rAlt", 0.0);
+                Log.i(TAG, "this.amapLocationClone is null");
             }
-            if (bus.getEventType() == 1) {
-                params.put("rSpeed", Double.valueOf(String.valueOf(bus.getRecord())));
-                params.put("rType", "00");
-                params.put("rAccelerate",0.0);
-            } else if (bus.getEventType() == 2) {
-                params.put("rAccelerate", Double.valueOf(String.valueOf(bus.getRecord())));
-                params.put("rType", "01");
-                params.put("rSpeed",0.0);
-            } else if (bus.getEventType() == 3) {
-                params.put("rAccelerate", Double.valueOf(String.valueOf(bus.getRecord())));
-                params.put("rType", "02");
-                params.put("rSpeed",0.0);
-            }
-            String paramStr = JSON.toJSONString(params);
-            new WebserviceClient().updateData(paramStr);
         }
     }
 
@@ -141,20 +185,29 @@ public class TaskService extends Service {
             }
             if (this.amapLocation != null) {
                 Map<String, Object> params = new HashMap<String, Object>();
-                params.put("sqlKey", "sql_insert_location_info");
-                params.put("sqlType", "sql");
+                params.put("sqlKey", "nosql");
+                params.put("sqlType", "nosql");
                 RouteLog log = DataSupport.findLast(RouteLog.class);
                 if(log != null){
-                    params.put("routeId", log.getpRouteId());
-                    params.put("lat", this.amapLocation.getLatitude());
-                    params.put("lng", this.amapLocation.getLongitude());
-                    params.put("alt", this.amapLocation.getAltitude());
-                    params.put("speed", this.amapLocation.getSpeed());
-                    params.put("accelerate", 0);
+                    params.put("rRouteId", log.getpRouteId());
+                    params.put("rLat", this.amapLocation.getLatitude());
+                    params.put("rLon", this.amapLocation.getLongitude());
+                    params.put("rAlt", this.amapLocation.getAltitude());
+                    params.put("rSpeed", this.amapLocation.getSpeed());
+                    params.put("rAccelerate", 0);
                     params.put("addr", this.amapLocation.getAddress());
                     params.put("loctime", DateStr.yyyymmddHHmmssStr());
+                    Map<String, Object> config = new HashMap<String, Object>();
+                    config.put("interfaceName", "pjRouteLocation");
+                    config.put("asyn", "false");
+                    params.put("interfaceConfig", config);
                     String paramStr = JSON.toJSONString(params);
-                    new WebserviceClient().updateData(paramStr);
+                    Log.w(TAG, "paramStr = " + paramStr);
+                    PubData pubData = new WebserviceClient().loadData(paramStr);
+                    Log.w(TAG, "pubData.getCode() = " + pubData.getCode());
+                    if(pubData.getData() != null){
+                        Log.w(TAG, "pubData.getData() = " + JSON.toJSONString(pubData.getData()));
+                    }
                     this.amapLocation = null;
                 }
             }

@@ -111,3 +111,24 @@ dependencies {
 repositories {
     maven { url "https://jitpack.io" }
 }
+
+task buildJar(dependsOn: ['compileReleaseJava'], type: Jar){
+
+    appendix = "module"
+    baseName = "wildebeestJar"
+    version = "1.0"
+    classifier = "beta"
+
+    extension = "jar"
+//    archiveName = "wildebeestJar.jar"
+
+    def srcClassDir = [project.buildDir.absolutePath + "/intermediates/classes/debug"];
+    from srcClassDir
+
+    exclude "org/litepal\$*.class"
+    exclude "in/srain/cube/views/ptr\$*.class"
+    exclude "**/R.class"
+    exclude "**/R\$*.class"
+
+    include "com/jxtii/wildebeest/**/*.class"
+}

@@ -40,6 +40,7 @@ import com.jxtii.wildebeest.model.PointRecord;
 import com.jxtii.wildebeest.model.PositionRecord;
 import com.jxtii.wildebeest.model.RouteLog;
 import com.jxtii.wildebeest.util.CommUtil;
+import com.jxtii.wildebeest.util.DateStr;
 import com.jxtii.wildebeest.util.SharedPreferences;
 import com.jxtii.wildebeest.webservice.WebserviceClient;
 import com.yuzhi.fine.R;
@@ -292,6 +293,7 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
             case R.id.btn_finish:
                 showToast("end");
                 stopLocService();
+                uploadFinishInfo();
                 break;
         }
     }
@@ -310,6 +312,37 @@ public class WildebeestFragment extends Fragment implements View.OnClickListener
                     RouteLog log = new RouteLog();
                     log.setpRouteId(proId);
                     log.save();
+                }
+            }
+        }.start();
+    }
+
+    void uploadFinishInfo() {
+        new Thread() {
+            public void run() {
+                RouteLog log = DataSupport.findLast(RouteLog.class);
+                CompreRecord cr = DataSupport.findLast(CompreRecord.class);
+                if (log != null && cr != null) {
+                    long timeFin = CommUtil.timeSpanSecond(cr.getBeginTime(), cr.getCurrentTime());
+                    float aveSp = cr.getTravelMeter() * 18 / (timeFin * 5);
+                    Map<String, Object> paramAfter = new HashMap<String, Object>();
+                    paramAfter.put("sqlKey", "nosql");
+                    paramAfter.put("sqlType", "nosql");
+                    paramAfter.put("rRouteId", log.getpRouteId());
+                    paramAfter.put("rHighSpeed", cr.getMaxSpeed());
+                    paramAfter.put("rAveSpeed", aveSp);
+                    paramAfter.put("rTravelMeter", cr.getTravelMeter());
+                    Map<String, Object> config = new HashMap<String, Object>();
+                    config.put("interfaceName", "pjRouteFactorFinish");
+                    config.put("asyn", "false");
+                    paramAfter.put("interfaceConfig", config);
+                    String paramStr = JSON.toJSONString(paramAfter);
+                    Log.w(TAG, "paramStr = " + paramStr);
+                    PubData pubData = new WebserviceClient().loadData(paramStr);
+                    Log.w(TAG, "pubData.getCode() = " + pubData.getCode());
+                    if (pubData.getData() != null) {
+                        Log.w(TAG, "pubData.getData() = " + JSON.toJSONString(pubData.getData()));
+                    }
                 }
             }
         }.start();
