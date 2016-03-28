@@ -29,6 +29,8 @@ public class CommUtil {
     public static final int BASIC_SCORE_ACC = 5;//急加速的基础扣分
     public static final int BASIC_SCORE_DEC = 10;//急减速的基础扣分
     public static final float MAX_SPEED = 30;//超速阀值30km/h
+    public static final float BEGIN_SPEED = 10.0f;//启动记录路线速度
+    public static final long NOGPS_TIME = 180;
     //TODO 网络通讯参数 需放到so中
     public static final String NAME_SPACE = "http://ep.wqsm.gaf.com/";
     public static final String WS_URL = "http://182.106.128.43/PubService.ws";

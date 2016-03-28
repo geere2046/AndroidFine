@@ -1,13 +1,23 @@
 
 package com.yuzhi.fine.activity;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.view.KeyEvent;
 import android.widget.RadioGroup;
+import android.widget.Toast;
 
+import com.jxtii.wildebeest.model.CompreRecord;
+import com.jxtii.wildebeest.model.PointRecord;
+import com.jxtii.wildebeest.model.PositionRecord;
+import com.jxtii.wildebeest.util.CommUtil;
 import com.yuzhi.fine.R;
 import com.yuzhi.fine.fragment.BufferKnifeFragment;
 import com.yuzhi.fine.fragment.MainPagerFragment;
@@ -15,6 +25,8 @@ import com.yuzhi.fine.fragment.MemberFragment;
 import com.yuzhi.fine.fragment.SensorFragment;
 import com.yuzhi.fine.fragment.WildebeestFragment;
 import com.yuzhi.fine.ui.UIHelper;
+
+import org.litepal.crud.DataSupport;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +42,7 @@ public class MainActivity extends BaseFragmentActivity {
 
     private ArrayList<String> fragmentTags;
     private FragmentManager fragmentManager;
+    static final int GPS_OPEN_STATUS = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +55,27 @@ public class MainActivity extends BaseFragmentActivity {
         } else {
             initFromSavedInstantsState(savedInstanceState);
         }
+        if (CommUtil.isOpenGPS(this)) {
+            showToast("已开启GPS！");
+            startLocService();
+        } else {
+            showToast("请开启GPS！");
+            Intent intent = new Intent(
+                    Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivityForResult(intent, GPS_OPEN_STATUS);
+        }
+    }
+
+    void startLocService() {
+        AlarmManager am = (AlarmManager) this.getSystemService(Context.ALARM_SERVICE);
+        long triggerAtTime = System.currentTimeMillis() + 5 * 1000;
+        long interval = 15 * 60 * 1000;
+        Intent intent = new Intent();
+        intent.setAction(CommUtil.START_INTENT);
+        intent.setPackage("com.yuzhi.fine");
+        intent.putExtra("interval", 2000);
+        PendingIntent pt = PendingIntent.getBroadcast(this, 0, intent, 0);
+        am.setRepeating(AlarmManager.RTC_WAKEUP, triggerAtTime, interval, pt);
     }
 
     @Override
@@ -129,5 +163,27 @@ public class MainActivity extends BaseFragmentActivity {
             return true;
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case GPS_OPEN_STATUS:
+                Boolean isOpen = CommUtil.isOpenGPS(this);
+                if (isOpen) {
+                    showToast("已开启GPS！");
+                    startLocService();
+                } else {
+                    showToast("请开启GPS！");
+                    Intent intent = new Intent(
+                            Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivityForResult(intent, GPS_OPEN_STATUS);
+                }
+                break;
+        }
+    }
+
+    void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 }
