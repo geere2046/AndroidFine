@@ -298,6 +298,7 @@ public class AMAPLocalizer implements AMapLocationListener {
         DataSupport.deleteAll(CompreRecord.class);
         DataSupport.deleteAll(PointRecord.class);
         DataSupport.deleteAll(NoGpsInfo.class);
+        DataSupport.deleteAll(RouteLog.class);
         new Thread() {
             public void run() {
                 Map<String, Object> params = new HashMap<String, Object>();
@@ -341,6 +342,7 @@ public class AMAPLocalizer implements AMapLocationListener {
                     Log.w(TAG, "pubData.getCode() = " + pubData.getCode());
                     if (pubData.getData() != null) {
                         Log.w(TAG, "pubData.getData() = " + JSON.toJSONString(pubData.getData()));
+                        DataSupport.deleteAll(RouteLog.class);
                     }
                 }
             }

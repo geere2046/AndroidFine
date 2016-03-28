@@ -31,6 +31,7 @@ public class CommUtil {
     public static final float MAX_SPEED = 30;//超速阀值30km/h
     public static final float BEGIN_SPEED = 10.0f;//启动记录路线速度
     public static final long NOGPS_TIME = 180;
+    public static final int LOC_FREQ = 10*1000;//上报定位数据频率
     //TODO 网络通讯参数 需放到so中
     public static final String NAME_SPACE = "http://ep.wqsm.gaf.com/";
     public static final String WS_URL = "http://182.106.128.43/PubService.ws";
